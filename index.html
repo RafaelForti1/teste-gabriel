@@ -11,22 +11,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <!-- Tokens semânticos (fonte única de verdade para Tailwind e para o JS) -->
+  <meta name="color-scheme" content="light dark" />
+  <!-- Tema: aplica antes do primeiro paint (preferência salva > sistema) -->
   <script>
-    window.TOKENS = {
-      surface: { page: '#F5F3EE', card: '#FFFFFF', elevated: '#FBFAF7', hover: '#EEEBE4' },
-      ink: { primary: '#15121F', secondary: '#4A4656', muted: '#8C8896' },
-      accent: { primary: '#1E1552', hover: '#2D2275', subtle: 'rgba(30, 21, 82, 0.07)', deep: '#0C0624' },
-      line: { default: '#DDD8CE', subtle: '#E9E5DD' },
-      status: { success: '#2F6B4F', error: '#A3362E', warning: '#9A6B1E' },
-    };
+    (function () {
+      var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      try { var saved = localStorage.getItem('mb-theme'); if (saved) dark = saved === 'dark'; } catch (e) {}
+      if (dark) document.documentElement.classList.add('dark');
+    })();
   </script>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
+    // Tokens semânticos: os valores vivem em variáveis CSS (light/dark), o Tailwind só referencia
+    const v = (n) => `rgb(var(--${n}) / <alpha-value>)`;
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
-          colors: window.TOKENS,
+          colors: {
+            surface: { page: v('surface-page'), card: v('surface-card'), elevated: v('surface-elevated'), hover: v('surface-hover') },
+            ink: { primary: v('ink-primary'), secondary: v('ink-secondary'), muted: v('ink-muted') },
+            accent: { primary: v('accent-primary'), hover: v('accent-hover'), subtle: 'rgb(var(--accent-primary) / 0.08)' },
+            line: { default: v('line-default'), subtle: v('line-subtle') },
+            status: { success: v('status-success'), error: v('status-error'), warning: v('status-warning') },
+            night: '#0C0624',
+            paper: '#F1EEFA',
+          },
           fontFamily: {
             display: ['"Instrument Serif"', 'serif'],
             body: ['Manrope', 'sans-serif'],
@@ -34,13 +44,13 @@
           },
           borderRadius: { card: '6px', button: '2px', input: '2px' },
           boxShadow: {
-            card: '0 1px 0 rgba(21,18,31,0.04), 0 12px 32px -18px rgba(21,18,31,0.18)',
-            hover: '0 1px 0 rgba(21,18,31,0.05), 0 22px 48px -22px rgba(30,21,82,0.28)',
-            float: '0 10px 40px -12px rgba(21,18,31,0.22)',
+            card: '0 1px 0 rgb(var(--shadow) / 0.04), 0 12px 32px -18px rgb(var(--shadow) / 0.18)',
+            hover: '0 1px 0 rgb(var(--shadow) / 0.05), 0 22px 48px -22px rgb(var(--accent-primary) / 0.3)',
+            float: '0 10px 40px -12px rgb(var(--shadow) / 0.22)',
           },
           backgroundImage: {
             blueprint:
-              'linear-gradient(rgba(30,21,82,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(30,21,82,0.035) 1px, transparent 1px)',
+              'linear-gradient(rgb(var(--grid) / 0.045) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--grid) / 0.045) 1px, transparent 1px)',
           },
           backgroundSize: { 'blueprint-cell': '48px 48px' },
           letterSpacing: { label: '0.18em' },
@@ -50,9 +60,26 @@
   </script>
   <style type="text/tailwindcss">
     @layer base {
+      :root {
+        --surface-page: 245 243 238; --surface-card: 255 255 255; --surface-elevated: 251 250 247; --surface-hover: 238 235 228;
+        --ink-primary: 21 18 31; --ink-secondary: 74 70 86; --ink-muted: 140 136 150;
+        --accent-primary: 30 21 82; --accent-hover: 45 34 117;
+        --line-default: 221 216 206; --line-subtle: 233 229 221;
+        --status-success: 47 107 79; --status-error: 163 54 46; --status-warning: 154 107 30;
+        --shadow: 21 18 31; --grid: 30 21 82;
+      }
+      .dark {
+        --surface-page: 14 12 22; --surface-card: 22 19 31; --surface-elevated: 19 17 28; --surface-hover: 35 31 48;
+        --ink-primary: 237 234 244; --ink-secondary: 180 175 194; --ink-muted: 125 120 144;
+        --accent-primary: 169 156 255; --accent-hover: 193 183 255;
+        --line-default: 42 38 56; --line-subtle: 32 29 45;
+        --status-success: 111 191 149; --status-error: 232 122 112; --status-warning: 226 178 98;
+        --shadow: 0 0 0; --grid: 169 156 255;
+      }
       html { -webkit-font-smoothing: antialiased; }
       body { @apply bg-surface-page text-ink-primary font-body; }
       ::selection { @apply bg-accent-primary text-surface-page; }
+      ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
     }
     @layer components {
       .label { @apply font-mono text-[11px] uppercase tracking-label text-ink-muted; }
@@ -84,25 +111,33 @@
     <div class="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 md:px-10 md:py-6">
       <a href="#topo" class="flex items-center gap-3">
         <img src="assets/Logo-MoyasBarizon.jpeg" alt="Logo Moyas & Barizon" class="h-10 w-10 rounded-button object-cover" />
-        <span class="font-display text-[22px] leading-none tracking-tight">Moyas <span class="italic text-accent-primary">&amp;</span> Barizon</span>
+        <span class="whitespace-nowrap font-display text-[22px] leading-none tracking-tight">Moyas <span class="italic text-accent-primary">&amp;</span> Barizon</span>
       </a>
       <nav class="hidden items-center gap-10 text-sm text-ink-secondary lg:flex">
         <a href="#disciplinas" class="transition-colors hover:text-accent-primary">O que fazemos</a>
         <a href="#jornada" class="transition-colors hover:text-accent-primary">Jornada</a>
         <a href="#mogi" class="transition-colors hover:text-accent-primary">Mogi das Cruzes</a>
       </nav>
-      <a href="#contato" class="btn-primary !px-5 !py-3">Agendar conversa</a>
+      <div class="flex items-center gap-3">
+        <button id="theme-toggle" type="button" aria-label="Alternar modo escuro" class="flex h-11 w-11 items-center justify-center rounded-button border border-line-default text-ink-primary transition-colors duration-300 hover:border-accent-primary hover:text-accent-primary">
+          <svg viewBox="0 0 24 24" class="h-[18px] w-[18px] dark:hidden" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" class="fill-none stroke-current" stroke-width="1.5" stroke-linejoin="round" /></svg>
+          <svg viewBox="0 0 24 24" class="hidden h-[18px] w-[18px] dark:block" aria-hidden="true"><circle cx="12" cy="12" r="4" class="fill-none stroke-current" stroke-width="1.5" /><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" class="stroke-current" stroke-width="1.5" stroke-linecap="round" /></svg>
+        </button>
+        <a href="#contato" class="btn-primary hidden !px-5 !py-3 sm:inline-flex">Agendar conversa</a>
+      </div>
     </div>
   </header>
 
   <main id="topo">
     <!-- ================= HERO: casa 3D que gira com o scroll ================= -->
-    <section id="hero" class="relative h-[320vh]">
+    <section id="hero" class="relative h-[460vh]">
       <div class="sticky top-0 h-screen w-full overflow-hidden">
         <canvas id="house-canvas" class="absolute inset-0 h-full w-full opacity-0"></canvas>
+        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-surface-page to-transparent"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 hidden w-[42%] bg-gradient-to-r from-surface-page/80 to-transparent lg:block"></div>
 
         <div class="pointer-events-none relative mx-auto flex h-full max-w-[1400px] flex-col justify-between px-4 pb-8 pt-28 md:px-10 md:pb-12 md:pt-36">
-          <div class="max-w-xl">
+          <div id="hero-intro" class="max-w-xl">
             <p class="label hero-fade mb-6">Arquitetura · Construção · Interiores — Mogi das Cruzes</p>
             <h1 id="hero-title" class="font-display text-[44px] leading-[0.98] tracking-tight sm:text-6xl lg:text-[88px]">
               Sua primeira casa,<br /> pensada de <em class="text-accent-primary">todos os lados.</em>
@@ -121,12 +156,17 @@
               </div>
               <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="1">
                 <p class="label mb-2"><span class="text-accent-primary">02</span> — Lateral</p>
-                <p class="font-display text-2xl leading-tight md:text-3xl">Luz do nascente entrando pelos brises.</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Luz natural atravessando os brises.</p>
               </div>
               <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="2">
-                <p class="label mb-2"><span class="text-accent-primary">03</span> — Fundos</p>
-                <p class="font-display text-2xl leading-tight md:text-3xl">O quintal onde a vida acontece.</p>
+                <p class="label mb-2"><span class="text-accent-primary">03</span> — Por dentro</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Interiores desenhados junto com as paredes.</p>
               </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="3">
+                <p class="label mb-2"><span class="text-accent-primary">04</span> — Quintal</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">O fim de tarde que vai virar rotina.</p>
+              </div>
+            </div>
             </div>
 
             <div class="flex shrink-0 items-center gap-4">
@@ -147,6 +187,10 @@
               <div>
                 <p class="label">Vista</p>
                 <p class="font-mono text-2xl tabular-nums md:text-3xl"><span id="angle-readout">000</span>°</p>
+              </div>
+              <div class="hidden border-l border-line-default pl-4 sm:block">
+                <p class="label">Hora</p>
+                <p class="font-mono text-2xl tabular-nums md:text-3xl"><span id="hour-readout">07</span>h</p>
               </div>
             </div>
           </div>
@@ -324,38 +368,38 @@
           <span aria-hidden="true" class="absolute bottom-2 left-[11px] top-2 w-px bg-line-default md:left-[15px]"></span>
           <span id="steps-progress" aria-hidden="true" class="absolute bottom-2 left-[11px] top-2 w-px origin-top bg-accent-primary md:left-[15px]"></span>
 
-          <li class="step relative pb-16">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 01</p>
             <h3 class="mb-2 font-display text-3xl">Conversa e escuta</h3>
             <p class="max-w-md text-ink-secondary">Entendemos sua rotina, seu orçamento e o que “casa” significa para você antes de qualquer traço.</p>
           </li>
-          <li class="step relative pb-16">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 02</p>
             <h3 class="mb-2 font-display text-3xl">Leitura do terreno</h3>
             <p class="max-w-md text-ink-secondary">Topografia, insolação, ventos e vizinhança. O lote diz muito sobre onde a casa quer estar.</p>
           </li>
-          <li class="step relative pb-16">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 03</p>
             <h3 class="mb-2 font-display text-3xl">Projeto e aprovação</h3>
             <p class="max-w-md text-ink-secondary">Estudo, maquete 3D, projeto executivo e toda a burocracia junto à prefeitura resolvidos por nós.</p>
           </li>
-          <li class="step relative pb-16">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 04</p>
             <h3 class="mb-2 font-display text-3xl">Obra acompanhada</h3>
             <p class="max-w-md text-ink-secondary">Equipe própria, cronograma físico-financeiro e relatórios para você ver cada laje subir.</p>
           </li>
-          <li class="step relative pb-16">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 05</p>
             <h3 class="mb-2 font-display text-3xl">Interiores</h3>
             <p class="max-w-md text-ink-secondary">Marcenaria, iluminação, revestimentos e mobiliário instalados. Nada de mudança para uma casa vazia.</p>
           </li>
-          <li class="step relative">
-            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+          <li class="step group relative">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page transition-colors duration-500 group-[.is-on]:border-accent-primary md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20 transition-all duration-500 group-[.is-on]:scale-150 group-[.is-on]:bg-accent-primary"></span></span>
             <p class="label mb-2">Etapa 06</p>
             <h3 class="mb-2 flex items-center gap-4 font-display text-3xl">
               Entrega das chaves
@@ -409,7 +453,7 @@
     </section>
 
     <!-- ================= PORTA (conceito do logo) ================= -->
-    <section id="door" class="relative h-screen overflow-hidden bg-accent-deep text-surface-page">
+    <section id="door" class="relative h-screen overflow-hidden bg-night text-paper">
       <svg id="door-svg" viewBox="0 0 1330 1182" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 h-full w-full" aria-hidden="true">
         <rect x="550" y="0" width="230" height="1182" fill="#1D1840" id="door-beam" />
         <g fill="none" stroke="#F1EEFA" stroke-width="22" stroke-linejoin="miter" stroke-linecap="butt">
@@ -421,7 +465,7 @@
         </g>
       </svg>
       <div id="door-copy" class="relative flex h-full flex-col items-center justify-center px-4 text-center opacity-0">
-        <p class="mb-6 font-mono text-[11px] uppercase tracking-label text-surface-page/60">Moyas &amp; Barizon</p>
+        <p class="mb-6 font-mono text-[11px] uppercase tracking-label text-paper/60">Moyas &amp; Barizon</p>
         <h2 class="font-display text-5xl leading-[1] tracking-tight md:text-8xl">Vamos começar<br /><em>pela porta de entrada.</em></h2>
       </div>
     </section>
@@ -456,31 +500,31 @@
   </main>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="bg-accent-deep px-4 pb-10 pt-20 text-surface-page md:px-10">
+  <footer class="bg-night px-4 pb-10 pt-20 text-paper md:px-10">
     <div class="mx-auto max-w-[1400px]">
-      <div class="flex flex-col justify-between gap-12 border-b border-surface-page/10 pb-16 md:flex-row">
+      <div class="flex flex-col justify-between gap-12 border-b border-paper/10 pb-16 md:flex-row">
         <div class="flex items-center gap-5">
           <img src="assets/Logo-MoyasBarizon.jpeg" alt="" class="h-20 w-20 rounded-button object-cover" />
           <div>
             <p class="font-display text-4xl leading-none">Moyas &amp; Barizon</p>
-            <p class="mt-2 text-sm text-surface-page/60">Arquitetura, construção e interiores</p>
+            <p class="mt-2 text-sm text-paper/60">Arquitetura, construção e interiores</p>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-10 text-sm text-surface-page/70">
+        <div class="grid grid-cols-2 gap-10 text-sm text-paper/70">
           <div class="grid gap-2">
-            <p class="font-mono text-[11px] uppercase tracking-label text-surface-page/40">Navegue</p>
-            <a href="#disciplinas" class="hover:text-surface-page">O que fazemos</a>
-            <a href="#jornada" class="hover:text-surface-page">Jornada</a>
-            <a href="#contato" class="hover:text-surface-page">Contato</a>
+            <p class="font-mono text-[11px] uppercase tracking-label text-paper/40">Navegue</p>
+            <a href="#disciplinas" class="hover:text-paper">O que fazemos</a>
+            <a href="#jornada" class="hover:text-paper">Jornada</a>
+            <a href="#contato" class="hover:text-paper">Contato</a>
           </div>
           <div class="grid gap-2">
-            <p class="font-mono text-[11px] uppercase tracking-label text-surface-page/40">Onde</p>
+            <p class="font-mono text-[11px] uppercase tracking-label text-paper/40">Onde</p>
             <p>Mogi das Cruzes — SP</p>
             <p>Alto Tietê</p>
           </div>
         </div>
       </div>
-      <p class="pt-8 font-mono text-[11px] uppercase tracking-label text-surface-page/40">© <span id="year"></span> Moyas &amp; Barizon</p>
+      <p class="pt-8 font-mono text-[11px] uppercase tracking-label text-paper/40">© <span id="year"></span> Moyas &amp; Barizon</p>
     </div>
   </footer>
 
@@ -530,6 +574,8 @@
         .to('#house-canvas', { opacity: 1, duration: 1.8 }, 0.3);
 
       ScrollTrigger.create({ start: 60, end: 'max', toggleClass: { targets: '#nav', className: 'nav-solid' } });
+      // o título sai de cena: a casa vira protagonista
+      gsap.to('#hero-intro', { opacity: 0, y: -60, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: () => '+=' + innerHeight * 0.6, scrub: 0.6 } });
       gsap.to('#scroll-hint', { opacity: 0, scrollTrigger: { trigger: '#hero', start: 'top top', end: '+=200', scrub: true } });
 
       // ---------- Reveals genéricos ----------
@@ -567,17 +613,10 @@
         scrollTrigger: { trigger: '#steps', start: 'top 60%', end: 'bottom 60%', scrub: 0.5 },
       });
       gsap.utils.toArray('.step').forEach((step) => {
-        const node = step.querySelector('.node'), dot = step.querySelector('.dot');
         ScrollTrigger.create({
           trigger: step, start: 'top 60%',
-          onEnter: () => {
-            gsap.to(node, { borderColor: TOKENS.accent.primary, duration: 0.5 });
-            gsap.to(dot, { backgroundColor: TOKENS.accent.primary, scale: 1.6, duration: 0.5, ease: 'back.out(3)' });
-          },
-          onLeaveBack: () => {
-            gsap.to(node, { borderColor: 'rgba(21,18,31,0.3)', duration: 0.5 });
-            gsap.to(dot, { backgroundColor: 'rgba(21,18,31,0.2)', scale: 1, duration: 0.5 });
-          },
+          onEnter: () => step.classList.add('is-on'),
+          onLeaveBack: () => step.classList.remove('is-on'),
         });
       });
       gsap.from('#key', { rotate: -90, opacity: 0, transformOrigin: '20% 50%', duration: 1.2, ease: 'back.out(2)', scrollTrigger: { trigger: '#key', start: 'top 70%' } });
@@ -601,6 +640,26 @@
       ScrollTrigger.refresh();
     });
 
+    // ---------- Tema claro / escuro ----------
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', (e) => {
+      const dark = !document.documentElement.classList.contains('dark');
+      const apply = () => {
+        document.documentElement.classList.toggle('dark', dark);
+        try { localStorage.setItem('mb-theme', dark ? 'dark' : 'light'); } catch (err) {}
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { dark } }));
+      };
+      if (!document.startViewTransition || reduce) return apply();
+      const x = e.clientX || innerWidth - 60, y = e.clientY || 40;
+      const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      document.startViewTransition(apply).ready.then(() => {
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+          { duration: 900, easing: 'cubic-bezier(.7,0,.25,1)', pseudoElement: '::view-transition-new(root)' }
+        );
+      });
+    });
+
     // ---------- Formulário (sem backend ainda) ----------
     document.getElementById('contact-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -613,206 +672,630 @@
     window.addEventListener('load', () => ScrollTrigger.refresh());
   </script>
 
-  <!-- ================= CASA 3D (three.js) + rotação por scroll (anime.js) ================= -->
+  <!-- ================= CASA 3D (three.js) + percurso por scroll (anime.js) ================= -->
   <script type="module">
     import * as THREE from 'three';
     import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
     const canvas = document.getElementById('house-canvas');
     const hero = document.getElementById('hero');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPower = innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // ---------- Renderer ----------
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1.5 : 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.toneMappingExposure = 1;
 
     const scene = new THREE.Scene();
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+    const DAY_BG = new THREE.Color('#F5F3EE'), NIGHT_BG = new THREE.Color('#0E0C16');
+    scene.background = DAY_BG.clone();
+    scene.fog = new THREE.Fog(DAY_BG.clone(), 38, 95);
 
-    // Luz
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d3c7, 0.6));
-    const sun = new THREE.DirectionalLight(0xfff6ea, 2.4);
-    sun.position.set(-10, 18, 12);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 60 });
-    sun.shadow.bias = -0.0004;
-    sun.shadow.radius = 4;
-    scene.add(sun);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 300);
 
-    // Sombra suave sobre a página
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.ShadowMaterial({ opacity: 0.12 }));
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Materiais — estética de maquete: branco, madeira e vidro índigo da marca
-    const M = {
-      white: new THREE.MeshStandardMaterial({ color: 0xf3f0ea, roughness: 0.85 }),
-      bone: new THREE.MeshStandardMaterial({ color: 0xe4ded2, roughness: 0.95 }),
-      stone: new THREE.MeshStandardMaterial({ color: 0xcfc7b8, roughness: 0.9 }),
-      wood: new THREE.MeshStandardMaterial({ color: 0xa97c55, roughness: 0.65 }),
-      glass: new THREE.MeshStandardMaterial({ color: 0x1e1552, roughness: 0.06, metalness: 0.65, envMapIntensity: 1.4 }),
-      dark: new THREE.MeshStandardMaterial({ color: 0x2a2733, roughness: 0.5 }),
-      water: new THREE.MeshStandardMaterial({ color: 0x3a3486, roughness: 0.04, metalness: 0.35 }),
+    // ---------- Texturas procedurais (canvas) ----------
+    let seed = 11;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    function tex(size, draw, srgb = true) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      draw(c.getContext('2d'), size);
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+    const noise = (g, s, n, a, light = true) => {
+      for (let i = 0; i < n; i++) {
+        g.fillStyle = light ? `rgba(255,255,255,${rnd() * a})` : `rgba(0,0,0,${rnd() * a})`;
+        g.fillRect(rnd() * s, rnd() * s, 1 + rnd() * 2, 1 + rnd() * 2);
+      }
     };
 
-    const house = new THREE.Group();
-    scene.add(house);
-    const box = (w, h, d, mat, x, y, z) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-      m.position.set(x, y, z);
-      m.castShadow = m.receiveShadow = true;
-      house.add(m);
+    const woodTex = tex(512, (g, s) => {
+      const rows = 8, h = s / rows;
+      for (let r = 0; r < rows; r++) {
+        g.fillStyle = `hsl(${24 + rnd() * 6}, ${38 + rnd() * 12}%, ${34 + rnd() * 10}%)`;
+        g.fillRect(0, r * h, s, h);
+        for (let k = 0; k < 26; k++) {
+          g.strokeStyle = `rgba(50,28,12,${0.05 + rnd() * 0.12})`;
+          g.lineWidth = 0.6 + rnd() * 1.6;
+          const y0 = r * h + rnd() * h, f = 0.01 + rnd() * 0.02, ph = rnd() * 6;
+          g.beginPath();
+          for (let x = 0; x <= s; x += 8) g.lineTo(x, y0 + Math.sin(x * f + ph) * 2.2);
+          g.stroke();
+        }
+        g.fillStyle = 'rgba(25,14,6,0.55)';
+        g.fillRect(0, r * h, s, 2);
+        g.fillRect(((r * 197) % s), r * h, 2, h);
+      }
+    });
+    const woodVTex = woodTex.clone();
+    woodVTex.rotation = Math.PI / 2;
+
+    const plasterTex = tex(512, (g, s) => {
+      g.fillStyle = '#efece6'; g.fillRect(0, 0, s, s);
+      for (let i = 0; i < 40; i++) {
+        const x = rnd() * s, y = rnd() * s, r = 30 + rnd() * 90;
+        const gr = g.createRadialGradient(x, y, 0, x, y, r);
+        gr.addColorStop(0, `rgba(${rnd() > 0.5 ? '255,255,255' : '190,182,168'},${0.06 + rnd() * 0.06})`);
+        gr.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      noise(g, s, 9000, 0.25, false); noise(g, s, 6000, 0.4);
+    });
+
+    const stoneTex = tex(512, (g, s) => {
+      g.fillStyle = '#5b554c'; g.fillRect(0, 0, s, s);
+      let y = 0;
+      while (y < s) {
+        const h = 10 + rnd() * 16; let x = -rnd() * 40;
+        while (x < s) {
+          const w = 30 + rnd() * 90, l = 52 + rnd() * 22;
+          g.fillStyle = `hsl(${30 + rnd() * 14}, ${8 + rnd() * 10}%, ${l}%)`;
+          g.fillRect(x + 1.5, y + 1.5, w - 3, h - 3);
+          x += w;
+        }
+        y += h;
+      }
+      noise(g, s, 8000, 0.25, false);
+    });
+
+    const paverTex = tex(512, (g, s) => {
+      const n = 4, w = s / n;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        g.fillStyle = `hsl(36, ${10 + rnd() * 6}%, ${80 + rnd() * 6}%)`;
+        g.fillRect(i * w, j * w, w, w);
+      }
+      noise(g, s, 14000, 0.2, false); noise(g, s, 6000, 0.35);
+      g.fillStyle = 'rgba(70,62,50,0.45)';
+      for (let i = 0; i <= n; i++) { g.fillRect(i * w - 1, 0, 2, s); g.fillRect(0, i * w - 1, s, 2); }
+    });
+
+    const grassTex = tex(512, (g, s) => {
+      g.fillStyle = '#66704c'; g.fillRect(0, 0, s, s);
+      for (let i = 0; i < 26000; i++) {
+        const x = rnd() * s, y = rnd() * s;
+        g.strokeStyle = `hsla(${68 + rnd() * 24}, ${18 + rnd() * 16}%, ${28 + rnd() * 20}%, 0.8)`;
+        g.lineWidth = 1;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rnd() - 0.5) * 3, y - 2 - rnd() * 5); g.stroke();
+      }
+    });
+
+    const tileTex = tex(256, (g, s) => {
+      g.fillStyle = '#b9dade'; g.fillRect(0, 0, s, s);
+      noise(g, s, 3000, 0.25);
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      const n = 8, w = s / n;
+      for (let i = 0; i <= n; i++) { g.fillRect(i * w - 1, 0, 2, s); g.fillRect(0, i * w - 1, s, 2); }
+    });
+
+    // Normal map de ondulação da água (tileável)
+    const waterNormal = (() => {
+      const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+      const g = c.getContext('2d'), img = g.createImageData(S, S);
+      const H = (x, y) => {
+        const u = (x / S) * Math.PI * 2, v = (y / S) * Math.PI * 2;
+        return Math.sin(u * 3 + v * 2) * 0.5 + Math.sin(u * 5 - v * 4 + 1) * 0.3 + Math.sin(u * 9 + v * 7 + 2) * 0.15 + Math.cos(v * 6 - u * 2) * 0.25;
+      };
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+        const dx = H(x + 1, y) - H(x - 1, y), dy = H(x, y + 1) - H(x, y - 1);
+        const n = new THREE.Vector3(-dx * 6, -dy * 6, 1).normalize();
+        const i = (y * S + x) * 4;
+        img.data[i] = (n.x * 0.5 + 0.5) * 255; img.data[i + 1] = (n.y * 0.5 + 0.5) * 255; img.data[i + 2] = (n.z * 0.5 + 0.5) * 255; img.data[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      return t;
+    })();
+
+    // ---------- Materiais (userData.s = metros por repetição da textura) ----------
+    const std = (o, s) => { const m = new THREE.MeshStandardMaterial(o); m.userData.s = s; return m; };
+    const M = {
+      plaster: std({ map: plasterTex, color: 0xffffff, roughness: 0.92 }, 3),
+      concrete: std({ map: plasterTex, color: 0xd6d1c7, roughness: 0.95 }, 2),
+      paver: std({ map: paverTex, roughness: 0.88 }, 2.4),
+      wood: std({ map: woodTex, roughness: 0.6 }, 1.6),
+      woodV: std({ map: woodVTex, roughness: 0.6 }, 1.6),
+      floor: std({ map: woodTex, color: 0xe8d8c4, roughness: 0.45 }, 1.8),
+      stone: std({ map: stoneTex, roughness: 0.95 }, 1.6),
+      tile: std({ map: tileTex, roughness: 0.3 }, 1.2),
+      frame: std({ color: 0x24222b, roughness: 0.35, metalness: 0.6 }, 1),
+      fabric: std({ color: 0xc9bfae, roughness: 1 }, 1),
+      linen: std({ color: 0xf1ede6, roughness: 1 }, 1),
+      rug: std({ color: 0x9c907e, roughness: 1 }, 1),
+      counter: std({ color: 0x3a3740, roughness: 0.25, metalness: 0.1 }, 1),
+      leaf: [0x4f6236, 0x5c7040, 0x45572e, 0x687a46].map((c) => std({ color: c, roughness: 0.85, flatShading: true }, 1)),
+      bark: std({ color: 0x4a3b2e, roughness: 1 }, 1),
+      pot: std({ color: 0xb9a48c, roughness: 0.9 }, 1),
+    };
+    const glass = new THREE.MeshPhysicalMaterial({
+      color: 0xb7bfd9, metalness: 0, roughness: 0.03, transparent: true, opacity: 0.26,
+      envMapIntensity: 2.4, specularIntensity: 1, ior: 1.5, side: THREE.DoubleSide, depthWrite: false,
+    });
+    const water = new THREE.MeshPhysicalMaterial({
+      color: 0x2f8da0, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.78,
+      normalMap: waterNormal, normalScale: new THREE.Vector2(0.35, 0.35), envMapIntensity: 1.6,
+    });
+    waterNormal.repeat.set(2, 1);
+
+    const lampMats = [];
+    const lampMat = () => {
+      const m = new THREE.MeshStandardMaterial({ color: 0xfff3e0, emissive: 0xffbf7a, emissiveIntensity: 0, roughness: 0.6 });
+      lampMats.push(m);
       return m;
     };
 
-    const P = 0.35; // topo da base
-    box(16, P, 12, M.bone, 0, P / 2, 0);
+    // ---------- Construção ----------
+    function worldUV(geo, w, h, d, s) {
+      const uv = geo.attributes.uv, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+      for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) {
+        const k = f * 4 + i;
+        uv.setXY(k, (uv.getX(k) * dims[f][0]) / s, (uv.getY(k) * dims[f][1]) / s);
+      }
+    }
+    function box(parent, w, h, d, mat, x, y, z, { cast = true, receive = true } = {}) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const s = (Array.isArray(mat) ? mat[2] : mat).userData?.s;
+      if (s) worldUV(geo, w, h, d, s);
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = cast; m.receiveShadow = receive;
+      parent.add(m);
+      return m;
+    }
+    function rbox(parent, w, h, d, r, mat, x, y, z) {
+      const m = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, r), mat);
+      m.position.set(x, y, z);
+      m.castShadow = m.receiveShadow = true;
+      parent.add(m);
+      return m;
+    }
 
-    // Térreo
-    box(9, 3.1, 6, M.white, -1.2, P + 1.55, -0.6);
-    box(6.8, 2.6, 0.06, M.glass, -0.4, P + 1.4, 2.43);
-    [-2.1, -0.4, 1.3].forEach((x) => box(0.05, 2.6, 0.1, M.dark, x, P + 1.4, 2.46));
-    box(1.1, 2.6, 0.08, M.wood, -4.9, P + 1.3, 2.44);
-    box(0.06, 2.6, 4, M.glass, 3.33, P + 1.4, -0.6);
-    box(9.3, 0.16, 6.3, M.white, -1.2, 3.45 + 0.08, -0.6);
-    box(5.2, 2.4, 0.06, M.glass, -2.6, P + 1.3, -3.63);
-    box(1.4, 1.2, 0.06, M.glass, 1.6, P + 1.9, -3.63);
-    box(0.06, 1.4, 2.4, M.glass, -5.73, P + 1.9, -1.2);
+    // Parede com aberturas: axis 'x' corre ao longo de x em z=c; axis 'z' corre ao longo de z em x=c
+    function wall(parent, axis, a0, a1, c, y0, y1, holes = [], mat = M.plaster, t = 0.22) {
+      const cuts = [...new Set([a0, a1, ...holes.flatMap((h) => [h.a0, h.a1])])].sort((p, q) => p - q);
+      const seg = (s, e, ya, yb) => {
+        const mid = (s + e) / 2, len = e - s, hh = yb - ya, yc = (ya + yb) / 2;
+        if (axis === 'x') box(parent, len, hh, t, mat, mid, yc, c);
+        else box(parent, t, hh, len, mat, c, yc, mid);
+      };
+      for (let i = 0; i < cuts.length - 1; i++) {
+        const s = cuts[i], e = cuts[i + 1], mid = (s + e) / 2;
+        const hole = holes.find((h) => mid > h.a0 && mid < h.a1);
+        if (!hole) seg(s, e, y0, y1);
+        else {
+          if (hole.y0 > y0) seg(s, e, y0, hole.y0);
+          if (hole.y1 < y1) seg(s, e, hole.y1, y1);
+        }
+      }
+      holes.forEach((h) => {
+        const len = h.a1 - h.a0, hh = h.y1 - h.y0, mid = (h.a0 + h.a1) / 2, yc = (h.y0 + h.y1) / 2, f = 0.06;
+        const put = (L, H, along, y) => (axis === 'x' ? box(parent, L, H, f, M.frame, along, y, c) : box(parent, f, H, L, M.frame, c, y, along));
+        if (h.door) {
+          const dm = axis === 'x' ? box(parent, len - 0.04, hh - 0.02, 0.07, M.woodV, mid, yc, c) : box(parent, 0.07, hh - 0.02, len - 0.04, M.woodV, c, yc, mid);
+          return dm;
+        }
+        const pane = axis === 'x'
+          ? box(parent, len, hh, 0.025, glass, mid, yc, c, { cast: false, receive: false })
+          : box(parent, 0.025, hh, len, glass, c, yc, mid, { cast: false, receive: false });
+        pane.renderOrder = 2;
+        put(len, f, mid, h.y1 - f / 2); put(len, f, mid, h.y0 + f / 2);
+        put(f, hh, h.a0 + f / 2, yc); put(f, hh, h.a1 - f / 2, yc);
+        for (let k = 1; k <= (h.mullions || 0); k++) put(0.045, hh, h.a0 + (len * k) / (h.mullions + 1), yc);
+      });
+    }
 
-    // Volume superior em balanço
-    const UY = 3.61, UH = 2.9;
-    box(8, UH, 5.4, M.white, 1.6, UY + UH / 2, 0);
-    box(7.2, 2.3, 0.06, M.glass, 1.6, UY + UH / 2, 2.72);
-    box(0.06, 2.2, 4.2, M.glass, 5.63, UY + UH / 2, 0);
-    box(0.06, 2.2, 4.2, M.glass, -2.43, UY + UH / 2, 0);
-    box(8.5, 0.18, 5.9, M.white, 1.6, UY + UH + 0.09, 0);
-    box(6.4, 1.1, 0.06, M.glass, 1.2, UY + 1.7, -2.73);
-    [-1.0, 1.2, 3.4].forEach((x) => box(0.05, 1.1, 0.1, M.dark, x, UY + 1.7, -2.76));
-    box(0.18, 3.26, 0.18, M.dark, 5.2, P + 1.63, 2.3);
+    const house = new THREE.Group();
+    scene.add(house);
+    const site = new THREE.Group(), ground = new THREE.Group(), gRoof = new THREE.Group(), upper = new THREE.Group(), uRoof = new THREE.Group();
+    house.add(site, ground, gRoof, upper, uRoof);
 
-    // Brises de madeira
-    const slatCount = 30;
-    const slats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.09, 2.5, 0.14), M.wood, slatCount);
+    const P = 0.35;           // topo do platô
+    const G = { x0: -5.7, x1: 3.3, z0: -3.6, z1: 2.4, y0: P, y1: P + 3.1 };
+    const UY = G.y1 + 0.24;   // base do volume superior
+    const U = { x0: -2.4, x1: 5.6, z0: -2.7, z1: 2.7, y0: UY + 0.12, y1: UY + 3.0 };
+    const t = 0.22, ht = t / 2;
+
+    // --- Platô com recorte da piscina ---
+    const plinth = [M.concrete, M.concrete, M.paver, M.concrete, M.concrete, M.concrete];
+    const pool = { x0: 1.0, x1: 6.2, z0: 3.1, z1: 5.5 };
+    box(site, 9, P, 12, plinth, -3.5, P / 2, 0);
+    box(site, 1.8, P, 12, plinth, 7.1, P / 2, 0);
+    box(site, 5.2, P, 9.1, plinth, 3.6, P / 2, -1.45);
+    box(site, 5.2, P, 0.5, plinth, 3.6, P / 2, 5.75);
+    box(site, 5.2, 0.04, 2.4, M.tile, 3.6, 0.02, 4.3);
+    const waterMesh = box(site, 5.2, 0.02, 2.4, water, 3.6, P - 0.07, 4.3, { cast: false });
+    waterMesh.renderOrder = 1;
+
+    // Gramado
+    const lawnTex = grassTex.clone();
+    lawnTex.repeat.set(36, 36);
+    const lawn = new THREE.Mesh(new THREE.CircleGeometry(70, 64), new THREE.MeshStandardMaterial({ map: lawnTex, roughness: 1 }));
+    lawn.rotation.x = -Math.PI / 2;
+    lawn.receiveShadow = true;
+    site.add(lawn);
+
+    // Deck, caminho, muro, sebe, espreguiçadeiras
+    box(site, 5.4, 0.05, 1.5, M.wood, -1.0, P + 0.025, 3.25);
+    [3.2, 4.15, 5.1].forEach((z, i) => box(site, 1.0, 0.04, 0.62, M.counter, -4.8 + (i % 2) * 0.12, P + 0.02, z));
+    box(site, 0.4, 2.3, 9, M.stone, -7.6, P + 1.15, -0.8);
+    rbox(site, 13.5, 1.1, 0.8, 0.3, M.leaf[1], 0.2, P + 0.55, -5.5);
+    [3.55, 4.8].forEach((z) => {
+      box(site, 1.5, 0.12, 0.6, M.linen, 7.1, P + 0.32, z);
+      box(site, 0.45, 0.1, 0.6, M.linen, 7.75, P + 0.45, z).rotation.z = 0.5;
+      box(site, 0.06, 0.26, 0.5, M.frame, 6.5, P + 0.13, z);
+      box(site, 0.06, 0.26, 0.5, M.frame, 7.6, P + 0.13, z);
+    });
+
+    // Árvores orgânicas
+    const swaying = [];
+    function tree(x, z, s) {
+      const g = new THREE.Group();
+      g.position.set(x, P, z);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.13 * s, 3 * s, 8), M.bark);
+      trunk.position.y = 1.5 * s; trunk.castShadow = true;
+      g.add(trunk);
+      const crown = new THREE.Group();
+      crown.position.y = 3 * s;
+      for (let i = 0; i < 7; i++) {
+        const geo = new THREE.IcosahedronGeometry((0.7 + rnd() * 0.5) * s, 1);
+        const pos = geo.attributes.position, off = {};
+        for (let k = 0; k < pos.count; k++) {
+          const key = `${pos.getX(k).toFixed(2)}|${pos.getY(k).toFixed(2)}|${pos.getZ(k).toFixed(2)}`;
+          off[key] ??= 1 + (rnd() - 0.5) * 0.35;
+          pos.setXYZ(k, pos.getX(k) * off[key], pos.getY(k) * off[key], pos.getZ(k) * off[key]);
+        }
+        geo.computeVertexNormals();
+        const blob = new THREE.Mesh(geo, M.leaf[i % 4]);
+        blob.position.set((rnd() - 0.5) * 1.6 * s, (rnd() - 0.2) * 1.0 * s, (rnd() - 0.5) * 1.6 * s);
+        blob.castShadow = blob.receiveShadow = true;
+        crown.add(blob);
+      }
+      g.add(crown);
+      swaying.push({ crown, ph: rnd() * 6 });
+      site.add(g);
+      return g;
+    }
+    const trees = [tree(-6.4, -4.4, 1.05), tree(6.8, -3.9, 1.2), tree(-6.4, 4.8, 0.85), tree(-10.5, 1.5, 1.3), tree(10.5, -6, 1.1)];
+
+    // --- Térreo ---
+    box(ground, G.x1 - G.x0 - 0.02, 0.05, G.z1 - G.z0 - 0.02, M.floor, (G.x0 + G.x1) / 2, P + 0.025, (G.z0 + G.z1) / 2);
+    wall(ground, 'x', G.x0, G.x1, G.z1 - ht, G.y0, G.y1, [
+      { a0: -5.3, a1: -4.3, y0: P, y1: P + 2.75, door: true },
+      { a0: -3.8, a1: 3.0, y0: P, y1: P + 2.8, mullions: 3 },
+    ]);
+    wall(ground, 'x', G.x0, G.x1, G.z0 + ht, G.y0, G.y1, [
+      { a0: -5.2, a1: -0.6, y0: P, y1: P + 2.7, mullions: 2 },
+      { a0: 0.9, a1: 2.4, y0: P + 1.3, y1: P + 2.6 },
+    ]);
+    wall(ground, 'z', G.z0 + t, G.z1 - t, G.x0 + ht, G.y0, G.y1, [{ a0: -2.6, a1: 0.2, y0: P + 1.0, y1: P + 2.6 }]);
+    wall(ground, 'z', G.z0 + t, G.z1 - t, G.x1 - ht, G.y0, G.y1, [{ a0: -3.0, a1: 1.8, y0: P, y1: P + 2.8, mullions: 2 }]);
+    box(ground, 0.16, UY - P, 0.16, M.frame, 5.25, (UY + P) / 2, 2.4);
+
+    // Interior térreo: estar
+    const F = P + 0.05;
+    box(ground, 3.4, 0.02, 2.4, M.rug, -3.6, F + 0.01, 0.4, { cast: false });
+    rbox(ground, 0.95, 0.42, 2.6, 0.08, M.fabric, -5.0, F + 0.21, 0.4);
+    rbox(ground, 0.26, 0.5, 2.6, 0.08, M.fabric, -5.38, F + 0.62, 0.4);
+    rbox(ground, 0.8, 0.22, 0.6, 0.08, M.linen, -4.95, F + 0.52, -0.2);
+    box(ground, 1.0, 0.32, 1.0, M.wood, -3.6, F + 0.16, 0.4);
+    box(ground, 0.5, 0.55, 2.2, M.wood, -2.1, F + 0.27, 0.4);
+    // jantar
+    box(ground, 2.1, 0.06, 1.0, M.wood, 0.4, F + 0.75, -1.6);
+    [-0.45, 1.25].forEach((x) => box(ground, 0.08, 0.72, 0.85, M.frame, x, F + 0.36, -1.6));
+    [-0.3, 0.4, 1.1].forEach((x) => [-2.3, -0.9].forEach((z) => rbox(ground, 0.46, 0.46, 0.46, 0.06, M.fabric, x, F + 0.23, z)));
+    const pendants = [];
+    [-0.1, 0.9].forEach((x) => {
+      box(ground, 0.01, 1.0, 0.01, M.frame, x, G.y1 - 0.5, -1.6, { cast: false });
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), lampMat());
+      lamp.position.set(x, G.y1 - 1.1, -1.6);
+      ground.add(lamp);
+      pendants.push(lamp);
+    });
+    // cozinha
+    box(ground, 2.4, 0.9, 0.9, M.linen, 1.6, F + 0.45, 0.9);
+    box(ground, 2.5, 0.05, 1.0, M.counter, 1.6, F + 0.92, 0.9);
+    [1.0, 1.6, 2.2].forEach((x) => box(ground, 0.34, 0.7, 0.34, M.wood, x, F + 0.35, 1.6));
+    box(ground, 3.2, 2.2, 0.6, M.wood, 1.5, F + 1.1, -3.15);
+    // escada flutuante
+    for (let i = 0; i < 13; i++) box(ground, 0.3, 0.06, 1.0, M.wood, -4.2 + i * 0.29, F + 0.22 + i * 0.245, -2.9);
+    // planta
+    box(ground, 0.5, 0.6, 0.5, M.pot, 2.8, F + 0.3, -2.7);
+    const plant = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 1), M.leaf[2]);
+    plant.position.set(2.8, F + 1.15, -2.7); plant.castShadow = true;
+    ground.add(plant);
+    // luminárias de parede na entrada (arandelas)
+    const sconce = box(ground, 0.12, 0.5, 0.08, lampMat(), -5.55, P + 2.0, G.z1 + 0.04, { cast: false });
+
+    // --- Laje do térreo ---
+    const roofMats = [];
+    const roofMat = () => { const m = M.plaster.clone(); m.transparent = true; roofMats.push(m); return m; };
+    box(gRoof, 9.4, 0.24, 6.4, roofMat(), (G.x0 + G.x1) / 2, G.y1 + 0.12, (G.z0 + G.z1) / 2);
+
+    // --- Volume superior em balanço ---
+    box(upper, U.x1 - U.x0, 0.12, U.z1 - U.z0, M.plaster, (U.x0 + U.x1) / 2, UY + 0.06, 0);
+    box(upper, U.x1 - U.x0 - 0.3, 0.04, U.z1 - U.z0 - 0.3, M.floor, (U.x0 + U.x1) / 2, U.y0 + 0.02, 0);
+    wall(upper, 'x', U.x0, U.x1, U.z1 - ht, U.y0, U.y1, [{ a0: -2.0, a1: 5.2, y0: U.y0 + 0.1, y1: U.y1 - 0.3, mullions: 2 }]);
+    wall(upper, 'x', U.x0, U.x1, U.z0 + ht, U.y0, U.y1, [{ a0: -2.0, a1: 4.6, y0: U.y0 + 1.1, y1: U.y1 - 0.45, mullions: 3 }]);
+    wall(upper, 'z', U.z0 + t, U.z1 - t, U.x1 - ht, U.y0, U.y1, [{ a0: -2.1, a1: 2.1, y0: U.y0 + 0.1, y1: U.y1 - 0.3, mullions: 1 }]);
+    wall(upper, 'z', U.z0 + t, U.z1 - t, U.x0 + ht, U.y0, U.y1, [{ a0: -1.6, a1: 1.6, y0: U.y0 + 0.8, y1: U.y1 - 0.5 }]);
+    // brises de madeira
+    const slatN = 34;
+    const slats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.08, U.y1 - U.y0 - 0.15, 0.16), M.woodV, slatN);
     slats.castShadow = slats.receiveShadow = true;
     const tmp = new THREE.Object3D();
-    for (let i = 0; i < slatCount; i++) {
-      tmp.position.set(-2.0 + (i * 7.2) / (slatCount - 1), UY + UH / 2, 2.85);
+    for (let i = 0; i < slatN; i++) {
+      tmp.position.set(-2.05 + (i * 7.3) / (slatN - 1), (U.y0 + U.y1) / 2 - 0.05, U.z1 + 0.14);
       tmp.updateMatrix();
       slats.setMatrixAt(i, tmp.matrix);
     }
-    house.add(slats);
-
-    // Muro, piscina, deck e caminho
-    box(0.4, 2.4, 8, M.stone, -7.2, P + 1.2, 0.2);
-    box(5.2, 0.04, 2.4, M.water, 3.6, P + 0.01, 4.3);
-    box(5, 0.05, 1.4, M.wood, -2.4, P + 0.02, 3.4);
-    [3.6, 4.5, 5.4].forEach((z, i) => box(1, 0.04, 0.6, M.white, -4.9 + i * 0.1, P + 0.02, z));
-
-    // Árvores de maquete
-    [[-6.2, -4.6, 1], [6.6, -3.8, 1.15], [-6.1, 4.9, 0.85]].forEach(([x, z, s]) => {
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 2.6 * s, 8), M.dark);
-      trunk.position.set(x, P + 1.3 * s, z);
-      const crown = new THREE.Mesh(new THREE.SphereGeometry(1 * s, 32, 16), M.white);
-      crown.position.set(x, P + 2.9 * s, z);
-      const crown2 = new THREE.Mesh(new THREE.SphereGeometry(0.62 * s, 32, 16), M.white);
-      crown2.position.set(x + 0.5 * s, P + 3.5 * s, z - 0.2);
-      [trunk, crown, crown2].forEach((m) => { m.castShadow = m.receiveShadow = true; house.add(m); });
+    upper.add(slats);
+    box(upper, 7.6, 0.08, 0.3, M.woodV, 1.6, U.y1 - 0.1, U.z1 + 0.14);
+    // fita de LED sob o balanço
+    const soffit = box(upper, U.x1 - U.x0 - 0.2, 0.03, 0.06, lampMat(), (U.x0 + U.x1) / 2, UY - 0.015, U.z1 - 0.15, { cast: false });
+    // interior: suíte
+    const UF = U.y0 + 0.04;
+    rbox(upper, 1.9, 0.38, 2.15, 0.08, M.linen, 2.6, UF + 0.19, -0.9);
+    rbox(upper, 1.95, 0.08, 1.2, 0.04, M.fabric, 2.6, UF + 0.42, -0.4);
+    box(upper, 2.5, 1.0, 0.1, M.wood, 2.6, UF + 0.5, -2.05);
+    [1.25, 3.95].forEach((x) => {
+      box(upper, 0.45, 0.45, 0.4, M.wood, x, UF + 0.22, -1.75);
+      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.26, 20), lampMat());
+      l.position.set(x, UF + 0.6, -1.75);
+      upper.add(l);
     });
+    box(upper, 1.5, 0.04, 0.65, M.wood, -1.0, UF + 0.75, 1.7);
+    rbox(upper, 0.5, 0.8, 0.5, 0.06, M.fabric, -1.0, UF + 0.4, 1.05);
+    rbox(upper, 0.85, 0.7, 0.85, 0.12, M.fabric, 4.7, UF + 0.35, 1.6);
+    const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 12), lampMat());
+    deskLamp.position.set(-0.5, UF + 1.0, 1.75);
+    upper.add(deskLamp);
 
-    // ---------- Câmera / layout responsivo ----------
-    const target = new THREE.Vector3(0, 2.2, 0);
+    // --- Laje superior ---
+    box(uRoof, 8.6, 0.24, 6.0, roofMat(), (U.x0 + U.x1) / 2, U.y1 + 0.12, 0);
+
+    // ---------- Luzes ----------
+    const hemi = new THREE.HemisphereLight(0xffffff, 0xc9c2b4, 0.55);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff4e6, 3);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048);
+    Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 80 });
+    sun.shadow.bias = -0.0003;
+    sun.shadow.normalBias = 0.02;
+    scene.add(sun);
+
+    // Luzes internas (acendem em sequência à noite)
+    const pl = (parent, color, intensity, dist, x, y, z, at) => {
+      const l = new THREE.PointLight(color, 0, dist, 2);
+      l.position.set(x, y, z);
+      parent.add(l);
+      return { l, max: intensity, at };
+    };
+    const night = [
+      { ...pl(ground, 0xffc98a, 14, 9, -3.6, P + 2.6, 0.4, 0.0), mats: [sconce.material] },
+      { ...pl(upper, 0xffbf7a, 4, 6, 0.6, UY - 0.3, 3.3, 0.0), mats: [soffit.material] },
+      { ...pl(ground, 0xffbe78, 12, 7, 0.4, G.y1 - 1.3, -1.6, 0.12), mats: pendants.map((p) => p.material) },
+      { ...pl(ground, 0xffd29c, 9, 7, 1.6, P + 2.6, 0.9, 0.22), mats: [] },
+      { ...pl(upper, 0xffc48a, 14, 9, 2.6, UF + 2.2, -0.6, 0.32), mats: lampMats.slice(-3) },
+      { ...pl(site, 0x5fd3e6, 4, 5, 3.6, P - 0.25, 4.3, 0.46), mats: [] },
+      { ...pl(site, 0xffd7a3, 6, 7, -6.4, P + 0.4, -3.6, 0.58), mats: [] },
+      { ...pl(site, 0xffd7a3, 6, 7, 6.8, P + 0.4, -3.1, 0.62), mats: [] },
+    ];
+
+    // ---------- Pós-processamento ----------
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    let gtao = null;
+    if (!lowPower) {
+      try {
+        gtao = new GTAOPass(scene, camera, 1, 1);
+        gtao.updateGtaoMaterial({ radius: 0.7, distanceExponent: 1.5, thickness: 1.2, scale: 1.1, samples: 16 });
+        gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+        gtao.blendIntensity = 0.9;
+        composer.addPass(gtao);
+      } catch (e) { console.warn('GTAO indisponível', e); }
+    }
+    const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.1, 0.55, 0.95);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+
+    // ---------- Layout responsivo ----------
     let W = 1, H = 1, mobile = false;
     function resize() {
       W = canvas.clientWidth; H = canvas.clientHeight;
       mobile = W < 900;
       renderer.setSize(W, H, false);
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(W, H);
       camera.aspect = W / H;
-      // desloca a casa para a direita no desktop e para baixo no mobile
       if (mobile) camera.setViewOffset(W, H, 0, -H * 0.14, W, H);
-      else camera.setViewOffset(W, H, -W * 0.2, -H * 0.06, W, H);
+      else camera.setViewOffset(W, H, -W * 0.19, -H * 0.05, W, H);
       camera.updateProjectionMatrix();
     }
     new ResizeObserver(resize).observe(canvas);
     resize();
 
-    // ---------- Estado dirigido pelo scroll (anime.js) ----------
-    const view = { rot: 0 };
-    const TURN = Math.PI * 2;
+    // ---------- Progresso do scroll (anime.js) ----------
+    const view = { p: 0 };
     try {
       const { animate, onScroll } = await import('https://cdn.jsdelivr.net/npm/animejs@4.0.2/+esm');
       animate(view, {
-        rot: TURN,
+        p: 1,
         duration: 1000,
         ease: 'linear',
-        autoplay: onScroll({ target: hero, enter: 'top top', leave: 'bottom bottom', sync: 0.15 }),
+        autoplay: onScroll({ target: hero, enter: 'top top', leave: 'bottom bottom', sync: 0.12 }),
       });
     } catch (err) {
-      // fallback sem anime.js: lerp manual do progresso do scroll
       console.warn('anime.js indisponível, usando fallback', err);
       let goal = 0;
       const read = () => {
         const r = hero.getBoundingClientRect();
-        goal = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight))) * TURN;
+        goal = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
       };
       addEventListener('scroll', read, { passive: true });
       read();
-      (function tick() { view.rot += (goal - view.rot) * 0.1; requestAnimationFrame(tick); })();
+      (function tick() { view.p += (goal - view.p) * 0.1; requestAnimationFrame(tick); })();
     }
 
-    // ---------- UI ligada à rotação ----------
+    // Percurso da câmera: chaves ao longo do scroll
+    const K = [0, 0.2, 0.36, 0.5, 0.66, 0.82, 1];
+    const TRACK = {
+      elev:    [0.46, 0.17, 0.2, 0.95, 0.95, 0.3, 0.46],
+      dist:    [1.0, 0.7, 0.74, 1.08, 1.08, 0.82, 1.0],
+      explode: [0, 0, 0, 1, 1, 0, 0],
+      ty:      [2.4, 2.1, 2.1, 4.2, 4.2, 2.2, 2.4],
+    };
+    const track = (vals, p) => {
+      if (p <= K[0]) return vals[0];
+      for (let i = 1; i < K.length; i++) if (p <= K[i]) {
+        const u = (p - K[i - 1]) / (K[i] - K[i - 1]), e = u * u * (3 - 2 * u);
+        return vals[i - 1] + (vals[i] - vals[i - 1]) * e;
+      }
+      return vals[vals.length - 1];
+    };
+    const smooth = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+
+    // ---------- Tema: dia ↔ noite ----------
+    const mood = { night: document.documentElement.classList.contains('dark') ? 1 : 0 };
+    addEventListener('themechange', (e) => gsap.to(mood, { night: e.detail.dark ? 1 : 0, duration: reduce ? 0 : 1.6, ease: 'power2.inOut' }));
+
+    // ---------- UI ligada ao percurso ----------
     const readout = document.getElementById('angle-readout');
+    const hourOut = document.getElementById('hour-readout');
     const needle = document.getElementById('compass-needle');
     const phases = [...document.querySelectorAll('.hero-phase')];
     let phase = 0;
     function setPhase(n) {
       if (n === phase) return;
-      const out = phases[phase], inn = phases[n];
-      gsap.to(out, { opacity: 0, y: n > phase ? -16 : 16, duration: 0.5, ease: 'power2.in' });
-      gsap.fromTo(inn, { opacity: 0, y: n > phase ? 16 : -16 }, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', delay: 0.15 });
+      const out = phases[phase], inn = phases[n], dir = n > phase ? 1 : -1;
+      gsap.to(out, { opacity: 0, y: -16 * dir, duration: 0.5, ease: 'power2.in', overwrite: true });
+      gsap.fromTo(inn, { opacity: 0, y: 16 * dir }, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', delay: 0.15, overwrite: true });
       phase = n;
     }
 
-    // Parallax sutil com o mouse
     const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
     addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; });
 
-    // Intro: a casa "sobe" da base
-    house.scale.set(1, 0.001, 1);
-    gsap.to(house.scale, { y: 1, duration: 2.2, ease: 'expo.out', delay: 0.4 });
+    // ---------- Intro: a obra sobe camada por camada ----------
+    const build = { site: 0, ground: 14, gRoof: 18, upper: 22, uRoof: 26, zoom: 1.5 };
+    trees.forEach((tr) => tr.scale.setScalar(reduce ? 1 : 0.001));
+    if (!reduce) {
+      gsap.timeline({ delay: 0.3, defaults: { ease: 'expo.out', duration: 1.8 } })
+        .to(build, { zoom: 1, duration: 3.2, ease: 'power3.out' }, 0)
+        .to(build, { ground: 0 }, 0.15)
+        .to(build, { gRoof: 0 }, 0.4)
+        .to(build, { upper: 0 }, 0.65)
+        .to(build, { uRoof: 0 }, 0.9)
+        .to(trees.map((t) => t.scale), { x: 1, y: 1, z: 1, duration: 1.4, ease: 'back.out(1.6)', stagger: 0.1 }, 1.1);
+    } else Object.assign(build, { ground: 0, gRoof: 0, upper: 0, uRoof: 0, zoom: 1 });
 
-    const BASE = 0.12;
-    // Só renderiza enquanto o hero estiver visível
+    // ---------- Loop ----------
     let visible = true;
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(hero);
+    const clock = new THREE.Clock();
+    const target = new THREE.Vector3();
+    const sunWarm = new THREE.Color(0xffb36b), sunDay = new THREE.Color(0xfff4e6), moon = new THREE.Color(0x9fb2ff);
+    const BASE = 0.15, TURN = Math.PI * 2;
 
     renderer.setAnimationLoop(() => {
       if (!visible) return;
-      const p = view.rot / TURN;
-      house.rotation.y = BASE + view.rot;
+      const time = clock.getElapsedTime();
+      const p = view.p, n = mood.night;
 
+      // casa gira 360° com o scroll
+      house.rotation.y = BASE + p * TURN;
+
+      // vista explodida: lajes sobem e somem, volume superior se afasta
+      const ex = track(TRACK.explode, p);
+      site.position.y = build.site;
+      ground.position.y = build.ground;
+      gRoof.position.y = build.gRoof + ex * 2.2;
+      upper.position.y = build.upper + ex * 3.6;
+      uRoof.position.y = build.uRoof + ex * 9;
+      roofMats.forEach((m) => (m.opacity = 1 - ex));
+      [gRoof, uRoof].forEach((g) => g.children.forEach((c) => (c.castShadow = ex < 0.5)));
+
+      // câmera
       mouse.sx += (mouse.x - mouse.sx) * 0.05;
       mouse.sy += (mouse.y - mouse.sy) * 0.05;
-      const dist = mobile ? (W / H < 0.6 ? 64 : 50) : 33;
-      const elev = 0.44 - Math.sin(p * Math.PI) * 0.08; // câmera desce no meio do giro
-      camera.position.set(
-        Math.cos(Math.PI / 4) * dist + mouse.sx * 2,
-        dist * elev - mouse.sy * 1.2,
-        Math.sin(Math.PI / 4) * dist
-      );
+      const base = mobile ? (W / H < 0.6 ? 66 : 52) : 36;
+      const dist = base * track(TRACK.dist, p) * build.zoom;
+      const elev = track(TRACK.elev, p);
+      const az = Math.PI / 4 + mouse.sx * 0.12;
+      camera.position.set(Math.cos(az) * dist, dist * elev - mouse.sy * 1.5, Math.sin(az) * dist);
+      target.set(0, track(TRACK.ty, p), 0);
       camera.lookAt(target);
-      renderer.render(scene, camera);
 
-      const deg = Math.round((view.rot * 180) / Math.PI) % 360;
+      // sol percorre o dia (claro) / lua e luzes internas (escuro)
+      const a = -1.15 + p * 2.3;
+      sun.position.set(Math.sin(a) * 26, 10 + Math.cos(a) * 14 - n * 4, 14 + Math.cos(a) * 4);
+      sun.color.copy(sunDay).lerp(sunWarm, smooth(0.55, 1, p)).lerp(moon, n);
+      sun.intensity = (3.1 - smooth(0.7, 1, p) * 1.0) * (1 - n) + 0.35 * n;
+      hemi.intensity = 0.55 * (1 - n) + 0.05 * n;
+      scene.environmentIntensity = 1 - n * 0.9;
+      scene.background.copy(DAY_BG).lerp(NIGHT_BG, n);
+      scene.fog.color.copy(scene.background);
+      scene.fog.near = dist * 1.15;
+      scene.fog.far = dist * 2.6;
+      renderer.toneMappingExposure = 1 + n * 0.15;
+      bloom.strength = 0.08 + n * 0.75;
+      bloom.threshold = 0.95 - n * 0.45;
+
+      night.forEach(({ l, max, at, mats }) => {
+        const on = n * (at <= 0 ? 1 : smooth(at, at + 0.05, p));
+        l.intensity = max * on;
+        mats.forEach((m) => (m.emissiveIntensity = on * 4));
+      });
+      lampMats.forEach((m) => { if (!night.some((r) => r.mats.includes(m))) m.emissiveIntensity = n * 3; });
+
+      // vida: água e copas
+      waterNormal.offset.set(time * 0.02, time * 0.013);
+      swaying.forEach(({ crown, ph }) => { crown.rotation.z = Math.sin(time * 0.8 + ph) * 0.025; crown.rotation.x = Math.cos(time * 0.6 + ph) * 0.02; });
+
+      composer.render();
+
+      const deg = Math.round(p * 360) % 360;
       readout.textContent = String(deg).padStart(3, '0');
       needle.setAttribute('transform', `rotate(${deg} 40 40)`);
-      setPhase(p < 0.34 ? 0 : p < 0.67 ? 1 : 2);
+      hourOut.textContent = String(Math.round(n > 0.5 ? 19 + p * 4 : 7 + p * 11)).padStart(2, '0');
+      setPhase(p < 0.2 ? 0 : p < 0.4 ? 1 : p < 0.7 ? 2 : 3);
     });
   </script>
 </body>

@@ -130,11 +130,11 @@
 
   <main id="topo">
     <!-- ================= HERO: casa 3D que gira com o scroll ================= -->
-    <section id="hero" class="relative h-[460vh]">
+    <section id="hero" class="relative h-[1100vh]">
       <div class="sticky top-0 h-screen w-full overflow-hidden">
         <canvas id="house-canvas" class="absolute inset-0 h-full w-full opacity-0"></canvas>
         <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-surface-page to-transparent"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 hidden w-[42%] bg-gradient-to-r from-surface-page/80 to-transparent lg:block"></div>
+        <div id="hero-shade" aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 hidden w-[42%] bg-gradient-to-r from-surface-page/80 to-transparent lg:block"></div>
 
         <div class="pointer-events-none relative mx-auto flex h-full max-w-[1400px] flex-col justify-between px-4 pb-8 pt-28 md:px-10 md:pb-12 md:pt-36">
           <div id="hero-intro" class="max-w-xl">
@@ -159,13 +159,34 @@
                 <p class="font-display text-2xl leading-tight md:text-3xl">Luz natural atravessando os brises.</p>
               </div>
               <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="2">
-                <p class="label mb-2"><span class="text-accent-primary">03</span> — Por dentro</p>
+                <p class="label mb-2"><span class="text-accent-primary">03</span> — Planta livre</p>
                 <p class="font-display text-2xl leading-tight md:text-3xl">Interiores desenhados junto com as paredes.</p>
               </div>
               <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="3">
-                <p class="label mb-2"><span class="text-accent-primary">04</span> — Quintal</p>
-                <p class="font-display text-2xl leading-tight md:text-3xl">O fim de tarde que vai virar rotina.</p>
+                <p class="label mb-2"><span class="text-accent-primary">04</span> — Entrada</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">A porta pivotante se abre. Entre.</p>
               </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="4">
+                <p class="label mb-2"><span class="text-accent-primary">05</span> — Estar</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Pé-direito generoso e luz o dia inteiro.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="5">
+                <p class="label mb-2"><span class="text-accent-primary">06</span> — Cozinha</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Cozinhar conversando com quem está à mesa.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="6">
+                <p class="label mb-2"><span class="text-accent-primary">07</span> — Escada</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Degraus flutuantes, leves como o resto da casa.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="7">
+                <p class="label mb-2"><span class="text-accent-primary">08</span> — Suíte</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Acordar com a luz filtrada pelos brises.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="8">
+                <p class="label mb-2"><span class="text-accent-primary">09</span> — Vista</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">E, lá embaixo, o quintal esperando por você.</p>
+              </div>
+            </div>
             </div>
             </div>
 
@@ -907,6 +928,7 @@
       holes.forEach((h) => {
         const len = h.a1 - h.a0, hh = h.y1 - h.y0, mid = (h.a0 + h.a1) / 2, yc = (h.y0 + h.y1) / 2, f = 0.06;
         const put = (L, H, along, y) => (axis === 'x' ? box(parent, L, H, f, M.frame, along, y, c) : box(parent, f, H, L, M.frame, c, y, along));
+        if (h.open) return;
         if (h.door) {
           const dm = axis === 'x' ? box(parent, len - 0.04, hh - 0.02, 0.07, M.woodV, mid, yc, c) : box(parent, 0.07, hh - 0.02, len - 0.04, M.woodV, c, yc, mid);
           return dm;
@@ -997,7 +1019,7 @@
     // --- Térreo ---
     box(ground, G.x1 - G.x0 - 0.02, 0.05, G.z1 - G.z0 - 0.02, M.floor, (G.x0 + G.x1) / 2, P + 0.025, (G.z0 + G.z1) / 2);
     wall(ground, 'x', G.x0, G.x1, G.z1 - ht, G.y0, G.y1, [
-      { a0: -5.3, a1: -4.3, y0: P, y1: P + 2.75, door: true },
+      { a0: -5.3, a1: -4.3, y0: P, y1: P + 2.75, open: true },
       { a0: -3.8, a1: 3.0, y0: P, y1: P + 2.8, mullions: 3 },
     ]);
     wall(ground, 'x', G.x0, G.x1, G.z0 + ht, G.y0, G.y1, [
@@ -1008,37 +1030,55 @@
     wall(ground, 'z', G.z0 + t, G.z1 - t, G.x1 - ht, G.y0, G.y1, [{ a0: -3.0, a1: 1.8, y0: P, y1: P + 2.8, mullions: 2 }]);
     box(ground, 0.16, UY - P, 0.16, M.frame, 5.25, (UY + P) / 2, 2.4);
 
-    // Interior térreo: estar
+    // Porta pivotante
+    const doorPivot = new THREE.Group();
+    doorPivot.position.set(-5.3, P, G.z1 - ht);
+    ground.add(doorPivot);
+    box(doorPivot, 0.98, 2.73, 0.07, M.woodV, 0.49, 1.375, 0);
+    box(doorPivot, 0.03, 0.9, 0.05, M.frame, 0.85, 1.1, 0.07);
+
     const F = P + 0.05;
+    // estar
     box(ground, 3.4, 0.02, 2.4, M.rug, -3.6, F + 0.01, 0.4, { cast: false });
     rbox(ground, 0.95, 0.42, 2.6, 0.08, M.fabric, -5.0, F + 0.21, 0.4);
     rbox(ground, 0.26, 0.5, 2.6, 0.08, M.fabric, -5.38, F + 0.62, 0.4);
     rbox(ground, 0.8, 0.22, 0.6, 0.08, M.linen, -4.95, F + 0.52, -0.2);
+    rbox(ground, 0.6, 0.18, 0.5, 0.06, M.rug, -4.95, F + 0.52, 1.0);
     box(ground, 1.0, 0.32, 1.0, M.wood, -3.6, F + 0.16, 0.4);
-    box(ground, 0.5, 0.55, 2.2, M.wood, -2.1, F + 0.27, 0.4);
+    box(ground, 0.3, 0.05, 0.22, M.linen, -3.5, F + 0.345, 0.3);
+    rbox(ground, 0.8, 0.7, 0.8, 0.12, M.fabric, -2.7, F + 0.35, -0.6);
+    const floorLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.32, 24, 1, true), lampMat());
+    floorLamp.position.set(-5.2, F + 1.6, -1.2);
+    ground.add(floorLamp);
+    box(ground, 0.02, 1.45, 0.02, M.frame, -5.2, F + 0.72, -1.2);
+    // quadro no estar (a casa dentro da casa)
+    box(ground, 0.04, 1.0, 1.4, M.linen, -5.47, F + 1.75, 0.4);
     // jantar
-    box(ground, 2.1, 0.06, 1.0, M.wood, 0.4, F + 0.75, -1.6);
-    [-0.45, 1.25].forEach((x) => box(ground, 0.08, 0.72, 0.85, M.frame, x, F + 0.36, -1.6));
-    [-0.3, 0.4, 1.1].forEach((x) => [-2.3, -0.9].forEach((z) => rbox(ground, 0.46, 0.46, 0.46, 0.06, M.fabric, x, F + 0.23, z)));
+    box(ground, 2.0, 0.06, 1.0, M.wood, -0.6, F + 0.75, 0.6);
+    [-1.45, 0.25].forEach((x) => box(ground, 0.08, 0.72, 0.85, M.frame, x, F + 0.36, 0.6));
+    [-1.3, -0.6, 0.1].forEach((x) => [-0.12, 1.32].forEach((z) => rbox(ground, 0.44, 0.46, 0.44, 0.06, M.fabric, x, F + 0.23, z)));
+    box(ground, 0.5, 0.04, 0.5, M.linen, -0.6, F + 0.8, 0.6);
     const pendants = [];
-    [-0.1, 0.9].forEach((x) => {
-      box(ground, 0.01, 1.0, 0.01, M.frame, x, G.y1 - 0.5, -1.6, { cast: false });
+    [-1.1, -0.1].forEach((x) => {
+      box(ground, 0.01, 1.0, 0.01, M.frame, x, G.y1 - 0.5, 0.6, { cast: false });
       const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), lampMat());
-      lamp.position.set(x, G.y1 - 1.1, -1.6);
+      lamp.position.set(x, G.y1 - 1.1, 0.6);
       ground.add(lamp);
       pendants.push(lamp);
     });
-    // cozinha
-    box(ground, 2.4, 0.9, 0.9, M.linen, 1.6, F + 0.45, 0.9);
-    box(ground, 2.5, 0.05, 1.0, M.counter, 1.6, F + 0.92, 0.9);
-    [1.0, 1.6, 2.2].forEach((x) => box(ground, 0.34, 0.7, 0.34, M.wood, x, F + 0.35, 1.6));
-    box(ground, 3.2, 2.2, 0.6, M.wood, 1.5, F + 1.1, -3.15);
-    // escada flutuante
-    for (let i = 0; i < 13; i++) box(ground, 0.3, 0.06, 1.0, M.wood, -4.2 + i * 0.29, F + 0.22 + i * 0.245, -2.9);
+    // cozinha: ilha + bancada no fundo
+    box(ground, 0.9, 0.9, 2.0, M.linen, 2.2, F + 0.45, 0.4);
+    box(ground, 1.0, 0.05, 2.1, M.counter, 2.2, F + 0.92, 0.4);
+    [-0.2, 0.4, 1.0].forEach((z) => box(ground, 0.34, 0.7, 0.34, M.wood, 1.5, F + 0.35, z));
+    box(ground, 3.1, 0.9, 0.6, M.wood, 1.55, F + 0.45, -3.15);
+    box(ground, 3.2, 0.05, 0.65, M.counter, 1.55, F + 0.92, -3.15);
+    // escada flutuante: sobe no sentido -x, de x 2.0 até -1.5
+    const STEPS = 13, RISE = (UY + 0.12 - F) / STEPS, RUN = 0.27;
+    for (let i = 0; i < STEPS; i++) box(ground, RUN + 0.02, 0.06, 0.9, M.wood, 2.0 - i * RUN, F + RISE * (i + 1) - 0.03, -2.05);
     // planta
-    box(ground, 0.5, 0.6, 0.5, M.pot, 2.8, F + 0.3, -2.7);
+    box(ground, 0.5, 0.6, 0.5, M.pot, -5.1, F + 0.3, -2.9);
     const plant = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 1), M.leaf[2]);
-    plant.position.set(2.8, F + 1.15, -2.7); plant.castShadow = true;
+    plant.position.set(-5.1, F + 1.15, -2.9); plant.castShadow = true;
     ground.add(plant);
     // luminárias de parede na entrada (arandelas)
     const sconce = box(ground, 0.12, 0.5, 0.08, lampMat(), -5.55, P + 2.0, G.z1 + 0.04, { cast: false });
@@ -1046,11 +1086,24 @@
     // --- Laje do térreo ---
     const roofMats = [];
     const roofMat = () => { const m = M.plaster.clone(); m.transparent = true; roofMats.push(m); return m; };
-    box(gRoof, 9.4, 0.24, 6.4, roofMat(), (G.x0 + G.x1) / 2, G.y1 + 0.12, (G.z0 + G.z1) / 2);
+    // vão da escada atravessa as duas lajes
+    const HOLE = { x0: -1.65, x1: 2.1, z0: -2.5, z1: -1.58 };
+    function slab(parent, x0, x1, z0, z1, y, h, mat) {
+      const piece = (a0, a1, b0, b1) => a1 > a0 && b1 > b0 && box(parent, a1 - a0, h, b1 - b0, mat, (a0 + a1) / 2, y, (b0 + b1) / 2);
+      piece(x0, x1, z0, HOLE.z0);
+      piece(x0, x1, HOLE.z1, z1);
+      piece(x0, HOLE.x0, HOLE.z0, HOLE.z1);
+      piece(HOLE.x1, x1, HOLE.z0, HOLE.z1);
+    }
+    const gRoofMat = roofMat();
+    slab(gRoof, G.x0 - 0.2, G.x1 + 0.2, G.z0 - 0.2, G.z1 + 0.2, G.y1 + 0.12, 0.24, gRoofMat);
 
     // --- Volume superior em balanço ---
-    box(upper, U.x1 - U.x0, 0.12, U.z1 - U.z0, M.plaster, (U.x0 + U.x1) / 2, UY + 0.06, 0);
-    box(upper, U.x1 - U.x0 - 0.3, 0.04, U.z1 - U.z0 - 0.3, M.floor, (U.x0 + U.x1) / 2, U.y0 + 0.02, 0);
+    slab(upper, U.x0, U.x1, U.z0, U.z1, UY + 0.06, 0.12, M.plaster);
+    slab(upper, U.x0 + 0.15, U.x1 - 0.15, U.z0 + 0.15, U.z1 - 0.15, U.y0 + 0.02, 0.04, M.floor);
+    // guarda-corpo de vidro no vão
+    box(upper, HOLE.x1 - HOLE.x0 - 0.9, 0.95, 0.02, glass, (HOLE.x0 + 0.9 + HOLE.x1) / 2, U.y0 + 0.5, HOLE.z1, { cast: false, receive: false }).renderOrder = 2;
+    box(upper, 0.02, 0.95, HOLE.z1 - HOLE.z0, glass, HOLE.x1, U.y0 + 0.5, (HOLE.z0 + HOLE.z1) / 2, { cast: false, receive: false }).renderOrder = 2;
     wall(upper, 'x', U.x0, U.x1, U.z1 - ht, U.y0, U.y1, [{ a0: -2.0, a1: 5.2, y0: U.y0 + 0.1, y1: U.y1 - 0.3, mullions: 2 }]);
     wall(upper, 'x', U.x0, U.x1, U.z0 + ht, U.y0, U.y1, [{ a0: -2.0, a1: 4.6, y0: U.y0 + 1.1, y1: U.y1 - 0.45, mullions: 3 }]);
     wall(upper, 'z', U.z0 + t, U.z1 - t, U.x1 - ht, U.y0, U.y1, [{ a0: -2.1, a1: 2.1, y0: U.y0 + 0.1, y1: U.y1 - 0.3, mullions: 1 }]);
@@ -1071,17 +1124,21 @@
     const soffit = box(upper, U.x1 - U.x0 - 0.2, 0.03, 0.06, lampMat(), (U.x0 + U.x1) / 2, UY - 0.015, U.z1 - 0.15, { cast: false });
     // interior: suíte
     const UF = U.y0 + 0.04;
-    rbox(upper, 1.9, 0.38, 2.15, 0.08, M.linen, 2.6, UF + 0.19, -0.9);
-    rbox(upper, 1.95, 0.08, 1.2, 0.04, M.fabric, 2.6, UF + 0.42, -0.4);
-    box(upper, 2.5, 1.0, 0.1, M.wood, 2.6, UF + 0.5, -2.05);
-    [1.25, 3.95].forEach((x) => {
+    rbox(upper, 1.9, 0.38, 2.15, 0.08, M.linen, 3.6, UF + 0.19, -0.9);
+    rbox(upper, 1.95, 0.08, 1.2, 0.04, M.fabric, 3.6, UF + 0.42, -0.4);
+    [3.15, 4.05].forEach((x) => rbox(upper, 0.7, 0.16, 0.4, 0.06, M.linen, x, UF + 0.45, -1.7));
+    box(upper, 2.5, 1.0, 0.1, M.wood, 3.6, UF + 0.5, -2.05);
+    box(upper, 2.6, 0.02, 1.7, M.rug, 3.6, UF + 0.01, -0.6, { cast: false });
+    [2.4, 4.85].forEach((x) => {
       box(upper, 0.45, 0.45, 0.4, M.wood, x, UF + 0.22, -1.75);
       const l = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.26, 20), lampMat());
       l.position.set(x, UF + 0.6, -1.75);
       upper.add(l);
     });
     box(upper, 1.5, 0.04, 0.65, M.wood, -1.0, UF + 0.75, 1.7);
+    [-1.6, -0.4].forEach((x) => box(upper, 0.04, 0.73, 0.6, M.frame, x, UF + 0.37, 1.7));
     rbox(upper, 0.5, 0.8, 0.5, 0.06, M.fabric, -1.0, UF + 0.4, 1.05);
+    box(upper, 0.5, 0.32, 0.02, M.counter, -1.0, UF + 0.95, 1.85);
     rbox(upper, 0.85, 0.7, 0.85, 0.12, M.fabric, 4.7, UF + 0.35, 1.6);
     const deskLamp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 12), lampMat());
     deskLamp.position.set(-0.5, UF + 1.0, 1.75);
@@ -1109,14 +1166,15 @@
       return { l, max: intensity, at };
     };
     const night = [
-      { ...pl(ground, 0xffc98a, 14, 9, -3.6, P + 2.6, 0.4, 0.0), mats: [sconce.material] },
+      { ...pl(ground, 0xffc98a, 12, 9, -3.6, P + 2.6, 0.4, 0.0), mats: [sconce.material, floorLamp.material] },
       { ...pl(upper, 0xffbf7a, 4, 6, 0.6, UY - 0.3, 3.3, 0.0), mats: [soffit.material] },
-      { ...pl(ground, 0xffbe78, 12, 7, 0.4, G.y1 - 1.3, -1.6, 0.12), mats: pendants.map((p) => p.material) },
-      { ...pl(ground, 0xffd29c, 9, 7, 1.6, P + 2.6, 0.9, 0.22), mats: [] },
-      { ...pl(upper, 0xffc48a, 14, 9, 2.6, UF + 2.2, -0.6, 0.32), mats: lampMats.slice(-3) },
-      { ...pl(site, 0x5fd3e6, 4, 5, 3.6, P - 0.25, 4.3, 0.46), mats: [] },
-      { ...pl(site, 0xffd7a3, 6, 7, -6.4, P + 0.4, -3.6, 0.58), mats: [] },
-      { ...pl(site, 0xffd7a3, 6, 7, 6.8, P + 0.4, -3.1, 0.62), mats: [] },
+      { ...pl(ground, 0xffbe78, 10, 7, -0.6, G.y1 - 1.3, 0.6, 0.06), mats: pendants.map((p) => p.material) },
+      { ...pl(ground, 0xffd29c, 8, 7, 1.8, P + 2.6, -1.4, 0.12), mats: [] },
+      { ...pl(upper, 0xffc48a, 12, 9, 3.0, UF + 2.2, -0.4, 0.18), mats: lampMats.slice(-3) },
+      { ...pl(upper, 0xffd6a8, 6, 6, -1.0, UF + 2.2, 0.8, 0.2), mats: [] },
+      { ...pl(site, 0x5fd3e6, 4, 5, 3.6, P - 0.25, 4.3, 0.24), mats: [] },
+      { ...pl(site, 0xffd7a3, 6, 7, -6.4, P + 0.4, -3.6, 0.28), mats: [] },
+      { ...pl(site, 0xffd7a3, 6, 7, 6.8, P + 0.4, -3.1, 0.3), mats: [] },
     ];
 
     // ---------- Pós-processamento ----------
@@ -1138,6 +1196,7 @@
 
     // ---------- Layout responsivo ----------
     let W = 1, H = 1, mobile = false;
+    const offset = { x: 0, y: 0 };
     function resize() {
       W = canvas.clientWidth; H = canvas.clientHeight;
       mobile = W < 900;
@@ -1145,9 +1204,9 @@
       composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(W, H);
       camera.aspect = W / H;
-      if (mobile) camera.setViewOffset(W, H, 0, -H * 0.14, W, H);
-      else camera.setViewOffset(W, H, -W * 0.19, -H * 0.05, W, H);
-      camera.updateProjectionMatrix();
+      // a casa fica à direita do texto no desktop e abaixo no mobile (só do lado de fora)
+      offset.x = mobile ? 0 : -W * 0.19;
+      offset.y = mobile ? -H * 0.14 : -H * 0.05;
     }
     new ResizeObserver(resize).observe(canvas);
     resize();
@@ -1198,6 +1257,7 @@
 
     // ---------- UI ligada ao percurso ----------
     const readout = document.getElementById('angle-readout');
+    const shade = document.getElementById('hero-shade');
     const hourOut = document.getElementById('hour-readout');
     const needle = document.getElementById('compass-needle');
     const phases = [...document.querySelectorAll('.hero-phase')];
@@ -1232,18 +1292,52 @@
     const clock = new THREE.Clock();
     const target = new THREE.Vector3();
     const sunWarm = new THREE.Color(0xffb36b), sunDay = new THREE.Color(0xfff4e6), moon = new THREE.Color(0x9fb2ff);
+    // ---------- Passeio interno (coordenadas locais da casa) ----------
+    const EXT_END = 0.36;    // até aqui: giro de 360° por fora
+    const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    const EYE = F + 1.55, EYE_UP = UF + 1.55;
+    const WALK = [
+      // [posição da câmera, para onde olha]
+      [null, v3(0, 2.4, 0)],                                   // 0 — vista aérea final do giro
+      [v3(-4.8, 3.4, 10.5), v3(-4.8, 1.8, 2.3)],               // 1 — desce em direção à porta
+      [v3(-4.8, EYE + 0.1, 4.6), v3(-4.8, 1.7, 0)],            // 2 — porta se abre
+      [v3(-4.75, EYE, 1.5), v3(-3.4, 1.4, -2.2)],              // 3 — entrada
+      [v3(-3.1, EYE, 1.9), v3(-5.4, 1.5, -0.2)],               // 4 — estar, olhando o sofá
+      [v3(-1.9, EYE, 1.9), v3(1.8, 1.4, 0.1)],                 // 5 — jantar e cozinha
+      [v3(0.6, EYE, -0.9), v3(2.6, 1.6, -2.4)],                // 6 — rumo à escada
+      [v3(2.75, EYE + 0.05, -1.35), v3(-1.6, 3.4, -2.05)],     // 7 — pé da escada
+      [v3(0.2, 4.45, -2.05), v3(1.6, 4.9, 0.6)],              // 8 — subindo pelo vão
+      [v3(-1.4, EYE_UP, -1.9), v3(3.0, 4.8, 0.2)],             // 9 — chegada ao andar de cima
+      [v3(-0.6, EYE_UP, 0.7), v3(3.6, 4.5, -0.9)],             // 10 — suíte
+      [v3(2.2, EYE_UP, 0.5), v3(2.2, 4.8, 9)],                 // 11 — luz pelos brises
+      [v3(4.6, EYE_UP, 0.2), v3(9, 4.6, 0.6)],                 // 12 — rumo ao vidro lateral
+      [v3(9.5, 5.8, 1.6), v3(3.6, 1.0, 4.3)],                  // 13 — lá fora, sobre a piscina
+      [v3(14, 8.5, 12), v3(1, 2.6, 0.4)],                      // 14 — vista final
+    ];
+    let walkPos = null, walkLook = null, walkBase = 0;
     const BASE = 0.15, TURN = Math.PI * 2;
+    function buildWalk(extCam) {
+      // ponto 0 = posição real da câmera no fim do giro, convertida para o espaço da casa
+      WALK[0][0] = extCam.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -(BASE + TURN));
+      walkPos = new THREE.CatmullRomCurve3(WALK.map((w) => w[0]), false, 'centripetal');
+      walkLook = new THREE.CatmullRomCurve3(WALK.map((w) => w[1]), false, 'centripetal');
+    }
+    const at = (i) => EXT_END + ((1 - EXT_END) * i) / (WALK.length - 1); // p em que a câmera passa pelo ponto i
+    const lookW = new THREE.Vector3(), lastDist = { v: 36 };
 
     renderer.setAnimationLoop(() => {
       if (!visible) return;
       const time = clock.getElapsedTime();
       const p = view.p, n = mood.night;
+      const ext = Math.min(1, p / EXT_END);
+      const inside = smooth(at(1.6), at(3), p) * (1 - smooth(at(12.3), at(13.6), p));   // 0 fora → 1 dentro
 
-      // casa gira 360° com o scroll
-      house.rotation.y = BASE + p * TURN;
+      // casa gira 360° com o scroll (fase externa)
+      house.rotation.y = BASE + ext * TURN;
+      house.updateMatrixWorld();
 
       // vista explodida: lajes sobem e somem, volume superior se afasta
-      const ex = track(TRACK.explode, p);
+      const ex = track(TRACK.explode, ext);
       site.position.y = build.site;
       ground.position.y = build.ground;
       gRoof.position.y = build.gRoof + ex * 2.2;
@@ -1252,34 +1346,57 @@
       roofMats.forEach((m) => (m.opacity = 1 - ex));
       [gRoof, uRoof].forEach((g) => g.children.forEach((c) => (c.castShadow = ex < 0.5)));
 
-      // câmera
+      // porta pivotante abre quando a câmera se aproxima
+      doorPivot.rotation.y = smooth(at(0.9), at(1.7), p) * 1.45;
+
       mouse.sx += (mouse.x - mouse.sx) * 0.05;
       mouse.sy += (mouse.y - mouse.sy) * 0.05;
       const base = mobile ? (W / H < 0.6 ? 66 : 52) : 36;
-      const dist = base * track(TRACK.dist, p) * build.zoom;
-      const elev = track(TRACK.elev, p);
-      const az = Math.PI / 4 + mouse.sx * 0.12;
-      camera.position.set(Math.cos(az) * dist, dist * elev - mouse.sy * 1.5, Math.sin(az) * dist);
-      target.set(0, track(TRACK.ty, p), 0);
+
+      if (!walkPos) { walkBase = base; buildWalk(new THREE.Vector3(Math.cos(Math.PI / 4) * base, base * TRACK.elev[6], Math.sin(Math.PI / 4) * base)); }
+      if (p <= EXT_END) {
+        // órbita externa
+        const dist = base * track(TRACK.dist, ext) * build.zoom;
+        const elev = track(TRACK.elev, ext);
+        const az = Math.PI / 4 + mouse.sx * 0.12;
+        camera.position.set(Math.cos(az) * dist, dist * elev - mouse.sy * 1.5, Math.sin(az) * dist);
+        target.set(0, track(TRACK.ty, ext), 0);
+        lastDist.v = dist;
+        if (walkBase !== base) { walkBase = base; buildWalk(new THREE.Vector3(Math.cos(Math.PI / 4) * base, base * TRACK.elev[6], Math.sin(Math.PI / 4) * base)); }
+      } else {
+        // passeio: caminha pela curva em coordenadas da casa
+        const u = (p - EXT_END) / (1 - EXT_END);
+        camera.position.copy(walkPos.getPoint(u)).applyMatrix4(house.matrixWorld);
+        lookW.copy(walkLook.getPoint(Math.min(1, u + 0.004))).applyMatrix4(house.matrixWorld);
+        // olhar em volta com o mouse
+        const side = new THREE.Vector3().subVectors(lookW, camera.position).cross(camera.up).normalize();
+        target.copy(lookW).addScaledVector(side, -mouse.sx * 1.6 * inside);
+        target.y -= mouse.sy * 1.2 * inside;
+      }
       camera.lookAt(target);
+      camera.fov = 30 + inside * 32;
+      camera.setViewOffset(W, H, offset.x * (1 - inside), offset.y * (1 - inside), W, H);
+      camera.updateProjectionMatrix();
 
       // sol percorre o dia (claro) / lua e luzes internas (escuro)
       const a = -1.15 + p * 2.3;
       sun.position.set(Math.sin(a) * 26, 10 + Math.cos(a) * 14 - n * 4, 14 + Math.cos(a) * 4);
-      sun.color.copy(sunDay).lerp(sunWarm, smooth(0.55, 1, p)).lerp(moon, n);
-      sun.intensity = (3.1 - smooth(0.7, 1, p) * 1.0) * (1 - n) + 0.35 * n;
-      hemi.intensity = 0.55 * (1 - n) + 0.05 * n;
+      sun.color.copy(sunDay).lerp(sunWarm, smooth(0.6, 1, p)).lerp(moon, n);
+      sun.intensity = (3.1 - smooth(0.75, 1, p) * 0.9) * (1 - n) + 0.35 * n;
+      hemi.intensity = (0.55 + inside * 0.1) * (1 - n) + 0.05 * n;
       scene.environmentIntensity = 1 - n * 0.9;
       scene.background.copy(DAY_BG).lerp(NIGHT_BG, n);
       scene.fog.color.copy(scene.background);
-      scene.fog.near = dist * 1.15;
-      scene.fog.far = dist * 2.6;
-      renderer.toneMappingExposure = 1 + n * 0.15;
-      bloom.strength = 0.08 + n * 0.75;
+      const fogBase = lastDist.v * (1 - inside) + 30 * inside;
+      scene.fog.near = fogBase * 1.15;
+      scene.fog.far = fogBase * 2.6 + inside * 40;
+      renderer.toneMappingExposure = 1 + n * 0.15 - inside * 0.06 * (1 - n);
+      shade.style.opacity = 1 - inside;
+      bloom.strength = 0.08 + n * 0.75 - n * inside * 0.35;
       bloom.threshold = 0.95 - n * 0.45;
 
-      night.forEach(({ l, max, at, mats }) => {
-        const on = n * (at <= 0 ? 1 : smooth(at, at + 0.05, p));
+      night.forEach(({ l, max, at: th, mats }) => {
+        const on = n * (th <= 0 ? 1 : smooth(th, th + 0.04, p));
         l.intensity = max * on;
         mats.forEach((m) => (m.emissiveIntensity = on * 4));
       });
@@ -1291,11 +1408,18 @@
 
       composer.render();
 
-      const deg = Math.round(p * 360) % 360;
+      // bússola: rotação da casa por fora, direção do olhar por dentro
+      let deg;
+      if (p <= EXT_END) deg = Math.round(ext * 360) % 360;
+      else {
+        const d = new THREE.Vector3().subVectors(target, camera.position);
+        deg = Math.round(((Math.atan2(d.x, -d.z) * 180) / Math.PI + 360) % 360);
+      }
       readout.textContent = String(deg).padStart(3, '0');
       needle.setAttribute('transform', `rotate(${deg} 40 40)`);
       hourOut.textContent = String(Math.round(n > 0.5 ? 19 + p * 4 : 7 + p * 11)).padStart(2, '0');
-      setPhase(p < 0.2 ? 0 : p < 0.4 ? 1 : p < 0.7 ? 2 : 3);
+      const PH = [0.1, 0.18, 0.3, at(2.8), at(4.6), at(6.6), at(9.2), at(11.6), Infinity];
+      setPhase(PH.findIndex((x) => p < x));
     });
   </script>
 </body>

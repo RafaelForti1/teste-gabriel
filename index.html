@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moyas & Barizon — Arquitetura, Construção e Interiores</title>
+  <meta name="description" content="Moyas & Barizon: arquitetura, construção e design de interiores em Mogi das Cruzes. Sua primeira casa, pensada de todos os lados." />
+  <link rel="icon" href="assets/Logo-MoyasBarizon.jpeg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Tokens semânticos (fonte única de verdade para Tailwind e para o JS) -->
+  <script>
+    window.TOKENS = {
+      surface: { page: '#F5F3EE', card: '#FFFFFF', elevated: '#FBFAF7', hover: '#EEEBE4' },
+      ink: { primary: '#15121F', secondary: '#4A4656', muted: '#8C8896' },
+      accent: { primary: '#1E1552', hover: '#2D2275', subtle: 'rgba(30, 21, 82, 0.07)', deep: '#0C0624' },
+      line: { default: '#DDD8CE', subtle: '#E9E5DD' },
+      status: { success: '#2F6B4F', error: '#A3362E', warning: '#9A6B1E' },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: window.TOKENS,
+          fontFamily: {
+            display: ['"Instrument Serif"', 'serif'],
+            body: ['Manrope', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          borderRadius: { card: '6px', button: '2px', input: '2px' },
+          boxShadow: {
+            card: '0 1px 0 rgba(21,18,31,0.04), 0 12px 32px -18px rgba(21,18,31,0.18)',
+            hover: '0 1px 0 rgba(21,18,31,0.05), 0 22px 48px -22px rgba(30,21,82,0.28)',
+            float: '0 10px 40px -12px rgba(21,18,31,0.22)',
+          },
+          backgroundImage: {
+            blueprint:
+              'linear-gradient(rgba(30,21,82,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(30,21,82,0.035) 1px, transparent 1px)',
+          },
+          backgroundSize: { 'blueprint-cell': '48px 48px' },
+          letterSpacing: { label: '0.18em' },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+      html { -webkit-font-smoothing: antialiased; }
+      body { @apply bg-surface-page text-ink-primary font-body; }
+      ::selection { @apply bg-accent-primary text-surface-page; }
+    }
+    @layer components {
+      .label { @apply font-mono text-[11px] uppercase tracking-label text-ink-muted; }
+      .btn-primary { @apply inline-flex items-center gap-3 rounded-button bg-accent-primary px-6 py-4 text-sm font-medium text-surface-page transition-colors duration-300 hover:bg-accent-hover; }
+      .btn-ghost { @apply inline-flex items-center gap-3 rounded-button border border-ink-primary/20 px-6 py-4 text-sm font-medium text-ink-primary transition-colors duration-300 hover:border-accent-primary hover:text-accent-primary; }
+      .field { @apply w-full rounded-input border border-line-default bg-surface-card px-4 py-3.5 text-[15px] text-ink-primary outline-none transition-colors placeholder:text-ink-muted focus:border-accent-primary; }
+      .split-line { overflow: hidden; padding-bottom: 0.08em; }
+      #nav { @apply border-b border-transparent transition-colors duration-500; }
+      #nav.nav-solid { @apply border-line-default bg-surface-page; }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body class="overflow-x-hidden">
+  <!-- Textura ambiente: papel de projeto (grid de prancheta) -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-blueprint bg-blueprint-cell"></div>
+
+  <!-- ================= NAV ================= -->
+  <header id="nav" class="fixed inset-x-0 top-0 z-50 opacity-0">
+    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 md:px-10 md:py-6">
+      <a href="#topo" class="flex items-center gap-3">
+        <img src="assets/Logo-MoyasBarizon.jpeg" alt="Logo Moyas & Barizon" class="h-10 w-10 rounded-button object-cover" />
+        <span class="font-display text-[22px] leading-none tracking-tight">Moyas <span class="italic text-accent-primary">&amp;</span> Barizon</span>
+      </a>
+      <nav class="hidden items-center gap-10 text-sm text-ink-secondary lg:flex">
+        <a href="#disciplinas" class="transition-colors hover:text-accent-primary">O que fazemos</a>
+        <a href="#jornada" class="transition-colors hover:text-accent-primary">Jornada</a>
+        <a href="#mogi" class="transition-colors hover:text-accent-primary">Mogi das Cruzes</a>
+      </nav>
+      <a href="#contato" class="btn-primary !px-5 !py-3">Agendar conversa</a>
+    </div>
+  </header>
+
+  <main id="topo">
+    <!-- ================= HERO: casa 3D que gira com o scroll ================= -->
+    <section id="hero" class="relative h-[320vh]">
+      <div class="sticky top-0 h-screen w-full overflow-hidden">
+        <canvas id="house-canvas" class="absolute inset-0 h-full w-full opacity-0"></canvas>
+
+        <div class="pointer-events-none relative mx-auto flex h-full max-w-[1400px] flex-col justify-between px-4 pb-8 pt-28 md:px-10 md:pb-12 md:pt-36">
+          <div class="max-w-xl">
+            <p class="label hero-fade mb-6">Arquitetura · Construção · Interiores — Mogi das Cruzes</p>
+            <h1 id="hero-title" class="font-display text-[44px] leading-[0.98] tracking-tight sm:text-6xl lg:text-[88px]">
+              Sua primeira casa,<br /> pensada de <em class="text-accent-primary">todos os lados.</em>
+            </h1>
+            <p class="hero-fade mt-6 max-w-md text-[15px] leading-relaxed text-ink-secondary md:text-base">
+              Do terreno às chaves, um só escritório projeta, constrói e mobilia. Role a página e veja a casa por inteiro.
+            </p>
+          </div>
+
+          <!-- Conceito: rosa dos ventos / leitura da vista -->
+          <div class="hero-fade flex items-end justify-between gap-6">
+            <div class="relative h-24 w-full max-w-sm">
+              <div class="hero-phase absolute inset-x-0 bottom-0" data-phase="0">
+                <p class="label mb-2"><span class="text-accent-primary">01</span> — Fachada</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">A primeira impressão de quem chega.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="1">
+                <p class="label mb-2"><span class="text-accent-primary">02</span> — Lateral</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">Luz do nascente entrando pelos brises.</p>
+              </div>
+              <div class="hero-phase absolute inset-x-0 bottom-0 opacity-0" data-phase="2">
+                <p class="label mb-2"><span class="text-accent-primary">03</span> — Fundos</p>
+                <p class="font-display text-2xl leading-tight md:text-3xl">O quintal onde a vida acontece.</p>
+              </div>
+            </div>
+
+            <div class="flex shrink-0 items-center gap-4">
+              <svg viewBox="0 0 80 80" class="h-16 w-16 md:h-20 md:w-20" aria-hidden="true">
+                <circle cx="40" cy="40" r="36" class="fill-none stroke-ink-primary/20" stroke-width="1" />
+                <circle cx="40" cy="40" r="28" class="fill-none stroke-ink-primary/10" stroke-width="1" stroke-dasharray="2 4" />
+                <g class="stroke-ink-primary/40" stroke-width="1">
+                  <line x1="40" y1="2" x2="40" y2="9" /><line x1="40" y1="71" x2="40" y2="78" />
+                  <line x1="2" y1="40" x2="9" y2="40" /><line x1="71" y1="40" x2="78" y2="40" />
+                </g>
+                <text x="40" y="20" text-anchor="middle" class="fill-ink-muted font-mono" font-size="7">N</text>
+                <g id="compass-needle">
+                  <polygon points="40,14 44,40 40,44 36,40" class="fill-accent-primary" />
+                  <polygon points="40,66 44,40 40,36 36,40" class="fill-ink-primary/15" />
+                </g>
+                <circle cx="40" cy="40" r="2" class="fill-surface-page stroke-ink-primary" stroke-width="1" />
+              </svg>
+              <div>
+                <p class="label">Vista</p>
+                <p class="font-mono text-2xl tabular-nums md:text-3xl"><span id="angle-readout">000</span>°</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="scroll-hint" class="label absolute bottom-6 left-1/2 hidden -translate-x-1/2 items-center gap-3 md:flex">
+          <span class="block h-8 w-px origin-top animate-pulse bg-ink-primary/40"></span> role para girar
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MANIFESTO ================= -->
+    <section class="relative px-4 py-32 md:px-10 md:py-48">
+      <div class="mx-auto max-w-[1100px]">
+        <p class="label mb-10" data-reveal>Manifesto</p>
+        <p id="manifesto" class="font-display text-[34px] leading-[1.12] tracking-tight md:text-[60px]">
+          Uma primeira casa não é um projeto qualquer. É o lugar onde você vai acordar pelos próximos trinta anos.
+          Por isso desenhamos devagar, construímos com precisão e só entregamos quando cada canto tiver o seu
+          <em class="text-accent-primary">porquê.</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= DISCIPLINAS ================= -->
+    <section id="disciplinas" class="px-4 pb-32 md:px-10 md:pb-48">
+      <div class="mx-auto max-w-[1400px]">
+        <div class="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <h2 class="max-w-2xl font-display text-5xl leading-[1] tracking-tight md:text-7xl" data-reveal>
+            Três ofícios,<br /> <em class="text-accent-primary">uma só assinatura.</em>
+          </h2>
+          <p class="max-w-sm text-ink-secondary" data-reveal>
+            Quem desenha é quem acompanha a obra e quem escolhe a luminária. Nada se perde entre uma etapa e outra.
+          </p>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-3">
+          <!-- Arquitetura: planta baixa desenhando-se -->
+          <article class="discipline group rounded-card border border-line-default bg-surface-card shadow-card transition-shadow duration-500 hover:shadow-hover" data-reveal>
+            <div class="border-b border-line-subtle bg-surface-elevated p-6">
+              <svg viewBox="0 0 320 240" class="w-full" aria-hidden="true">
+                <g class="draw fill-none stroke-ink-primary" stroke-width="3" stroke-linecap="square">
+                  <path d="M40 40 H280 V200 H170" />
+                  <path d="M130 200 H40 V40" />
+                  <path d="M160 40 V120 H220" />
+                  <path d="M250 120 H280" />
+                  <path d="M40 130 H100" />
+                </g>
+                <g class="draw fill-none stroke-ink-primary/50" stroke-width="1">
+                  <path d="M130 200 A40 40 0 0 1 170 160" />
+                  <line x1="170" y1="200" x2="170" y2="160" />
+                  <path d="M220 120 A30 30 0 0 0 250 90" />
+                  <line x1="250" y1="120" x2="250" y2="90" />
+                </g>
+                <!-- janelas -->
+                <g class="draw stroke-accent-primary" stroke-width="2">
+                  <line x1="70" y1="40" x2="130" y2="40" /><line x1="70" y1="44" x2="130" y2="44" />
+                  <line x1="190" y1="40" x2="250" y2="40" /><line x1="190" y1="44" x2="250" y2="44" />
+                  <line x1="280" y1="150" x2="280" y2="185" /><line x1="276" y1="150" x2="276" y2="185" />
+                </g>
+                <!-- cota -->
+                <g class="draw stroke-ink-muted" stroke-width="1">
+                  <line x1="40" y1="222" x2="280" y2="222" />
+                  <line x1="40" y1="216" x2="40" y2="228" /><line x1="280" y1="216" x2="280" y2="228" />
+                </g>
+                <g class="plan-label fill-ink-muted font-mono" font-size="9">
+                  <text x="160" y="217" text-anchor="middle">12,40 m</text>
+                  <text x="75" y="95">ESTAR</text>
+                  <text x="190" y="85">SUÍTE</text>
+                  <text x="62" y="170">COZINHA</text>
+                  <text x="198" y="165">VARANDA</text>
+                </g>
+              </svg>
+            </div>
+            <div class="p-7">
+              <p class="label mb-3"><span class="text-accent-primary">01</span> — Arquitetura</p>
+              <h3 class="mb-3 font-display text-3xl leading-tight">A planta nasce da sua rotina.</h3>
+              <p class="text-[15px] leading-relaxed text-ink-secondary">Onde bate o sol da manhã, quantos passos da cozinha até a mesa, onde mora o silêncio. Projeto autoral, aprovado na prefeitura e pronto para obra.</p>
+            </div>
+          </article>
+
+          <!-- Construção: camadas empilhando -->
+          <article class="discipline group rounded-card border border-line-default bg-surface-card shadow-card transition-shadow duration-500 hover:shadow-hover" data-reveal>
+            <div class="border-b border-line-subtle bg-surface-elevated p-6">
+              <svg viewBox="0 0 320 240" class="w-full" aria-hidden="true">
+                <defs>
+                  <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <line x1="0" y1="0" x2="0" y2="6" class="stroke-ink-primary/30" stroke-width="1.2" />
+                  </pattern>
+                </defs>
+                <line x1="20" y1="196" x2="300" y2="196" class="stroke-ink-primary/40" stroke-width="1" />
+                <g class="layer"><rect x="70" y="196" width="200" height="18" fill="url(#hatch)" class="stroke-ink-primary" stroke-width="1.5" /></g>
+                <g class="layer fill-surface-card stroke-ink-primary" stroke-width="1.5">
+                  <rect x="80" y="140" width="10" height="56" /><rect x="165" y="140" width="10" height="56" /><rect x="250" y="140" width="10" height="56" />
+                </g>
+                <g class="layer"><rect x="70" y="130" width="200" height="10" class="fill-ink-primary" /></g>
+                <g class="layer fill-surface-card stroke-ink-primary" stroke-width="1.5">
+                  <rect x="80" y="74" width="10" height="56" /><rect x="250" y="74" width="10" height="56" />
+                </g>
+                <g class="layer"><rect x="62" y="64" width="216" height="10" class="fill-accent-primary" /></g>
+                <!-- níveis -->
+                <g class="fill-ink-muted font-mono" font-size="9">
+                  <text x="12" y="199">+0,00</text>
+                  <text x="12" y="138">+3,10</text>
+                  <text x="12" y="72">+6,20</text>
+                </g>
+                <g class="fill-ink-primary/50">
+                  <polygon points="50,196 56,190 44,190" />
+                  <polygon points="50,135 56,129 44,129" />
+                  <polygon points="50,69 56,63 44,63" />
+                </g>
+                <line x1="50" y1="64" x2="50" y2="196" class="stroke-ink-primary/20" stroke-dasharray="2 3" />
+              </svg>
+            </div>
+            <div class="p-7">
+              <p class="label mb-3"><span class="text-accent-primary">02</span> — Construção</p>
+              <h3 class="mb-3 font-display text-3xl leading-tight">Camada por camada, sem surpresa.</h3>
+              <p class="text-[15px] leading-relaxed text-ink-secondary">Fundação, estrutura e cobertura executadas pela mesma equipe que desenhou. Cronograma claro e você acompanhando cada nível subir.</p>
+            </div>
+          </article>
+
+          <!-- Interiores: luz pendente acendendo sobre a sala -->
+          <article class="discipline group rounded-card border border-line-default bg-surface-card shadow-card transition-shadow duration-500 hover:shadow-hover" data-reveal>
+            <div class="border-b border-line-subtle bg-surface-elevated p-6">
+              <svg viewBox="0 0 320 240" class="w-full" aria-hidden="true">
+                <line x1="20" y1="20" x2="300" y2="20" class="stroke-ink-primary/40" stroke-width="1" />
+                <line x1="20" y1="206" x2="300" y2="206" class="stroke-ink-primary" stroke-width="1.5" />
+                <polygon class="light-cone fill-accent-primary/10" points="110,96 70,206 190,206 150,96" />
+                <line class="cable stroke-ink-primary" x1="130" y1="20" x2="130" y2="80" stroke-width="1" />
+                <path class="lamp fill-ink-primary" d="M118 80 H142 L152 96 H108 Z" />
+                <!-- quadro: a casa dentro da casa -->
+                <g class="art">
+                  <rect x="210" y="56" width="62" height="78" class="fill-surface-card stroke-ink-primary" stroke-width="1.5" />
+                  <g class="fill-none stroke-accent-primary" stroke-width="1.5">
+                    <path d="M224 122 V88 L241 76 L258 88 V122" />
+                    <path d="M231 122 V93 L241 86 L251 93 V122" />
+                  </g>
+                </g>
+                <!-- sofá -->
+                <g class="sofa fill-surface-card stroke-ink-primary" stroke-width="1.5">
+                  <rect x="60" y="160" width="140" height="34" rx="6" />
+                  <rect x="70" y="146" width="120" height="20" rx="5" />
+                  <line x1="72" y1="194" x2="72" y2="206" /><line x1="188" y1="194" x2="188" y2="206" />
+                </g>
+                <!-- vaso -->
+                <g class="plant fill-none stroke-ink-primary" stroke-width="1.5">
+                  <path d="M240 206 L236 176 H264 L260 206 Z" class="fill-surface-card" />
+                  <path d="M250 176 C246 156 236 150 228 146" />
+                  <path d="M250 176 C252 152 262 144 272 140" />
+                  <path d="M250 176 C250 160 250 150 252 132" />
+                </g>
+              </svg>
+            </div>
+            <div class="p-7">
+              <p class="label mb-3"><span class="text-accent-primary">03</span> — Interiores</p>
+              <h3 class="mb-3 font-display text-3xl leading-tight">A luz certa, no lugar certo.</h3>
+              <p class="text-[15px] leading-relaxed text-ink-secondary">Marcenaria, iluminação e mobiliário pensados junto com as paredes, não depois delas. A casa é entregue pronta para morar.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= JORNADA ================= -->
+    <section id="jornada" class="border-y border-line-default bg-surface-elevated px-4 py-32 md:px-10 md:py-44">
+      <div class="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-[1fr_1.2fr]">
+        <div class="lg:sticky lg:top-36 lg:self-start">
+          <p class="label mb-6" data-reveal>A jornada</p>
+          <h2 class="font-display text-5xl leading-[1] tracking-tight md:text-7xl" data-reveal>
+            Do terreno<br />às <em class="text-accent-primary">chaves.</em>
+          </h2>
+          <p class="mt-6 max-w-sm text-ink-secondary" data-reveal>Seis etapas, um interlocutor. Você sempre sabe em que ponto do caminho a sua casa está.</p>
+        </div>
+
+        <ol id="steps" class="relative pl-12 md:pl-16">
+          <span aria-hidden="true" class="absolute bottom-2 left-[11px] top-2 w-px bg-line-default md:left-[15px]"></span>
+          <span id="steps-progress" aria-hidden="true" class="absolute bottom-2 left-[11px] top-2 w-px origin-top bg-accent-primary md:left-[15px]"></span>
+
+          <li class="step relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 01</p>
+            <h3 class="mb-2 font-display text-3xl">Conversa e escuta</h3>
+            <p class="max-w-md text-ink-secondary">Entendemos sua rotina, seu orçamento e o que “casa” significa para você antes de qualquer traço.</p>
+          </li>
+          <li class="step relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 02</p>
+            <h3 class="mb-2 font-display text-3xl">Leitura do terreno</h3>
+            <p class="max-w-md text-ink-secondary">Topografia, insolação, ventos e vizinhança. O lote diz muito sobre onde a casa quer estar.</p>
+          </li>
+          <li class="step relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 03</p>
+            <h3 class="mb-2 font-display text-3xl">Projeto e aprovação</h3>
+            <p class="max-w-md text-ink-secondary">Estudo, maquete 3D, projeto executivo e toda a burocracia junto à prefeitura resolvidos por nós.</p>
+          </li>
+          <li class="step relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 04</p>
+            <h3 class="mb-2 font-display text-3xl">Obra acompanhada</h3>
+            <p class="max-w-md text-ink-secondary">Equipe própria, cronograma físico-financeiro e relatórios para você ver cada laje subir.</p>
+          </li>
+          <li class="step relative pb-16">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 05</p>
+            <h3 class="mb-2 font-display text-3xl">Interiores</h3>
+            <p class="max-w-md text-ink-secondary">Marcenaria, iluminação, revestimentos e mobiliário instalados. Nada de mudança para uma casa vazia.</p>
+          </li>
+          <li class="step relative">
+            <span class="node absolute -left-12 top-1 flex h-6 w-6 items-center justify-center border border-ink-primary/30 bg-surface-page md:-left-16 md:h-8 md:w-8"><span class="dot h-2 w-2 bg-ink-primary/20"></span></span>
+            <p class="label mb-2">Etapa 06</p>
+            <h3 class="mb-2 flex items-center gap-4 font-display text-3xl">
+              Entrega das chaves
+              <svg id="key" viewBox="0 0 64 24" class="h-6 w-16" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" class="fill-none stroke-accent-primary" stroke-width="2" />
+                <circle cx="12" cy="12" r="3" class="fill-accent-primary" />
+                <path d="M21 12 H60 M50 12 V19 M56 12 V17" class="fill-none stroke-accent-primary" stroke-width="2" />
+              </svg>
+            </h3>
+            <p class="max-w-md text-ink-secondary">Vistoria final juntos, manual da casa em mãos e a porta aberta. A partir daqui, ela é sua.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= MOGI DAS CRUZES ================= -->
+    <section id="mogi" class="px-4 py-32 md:px-10 md:py-48">
+      <div class="mx-auto grid max-w-[1400px] items-center gap-16 lg:grid-cols-2">
+        <div>
+          <p class="label mb-6" data-reveal>Mogi das Cruzes — 23°31′ S · 46°11′ W</p>
+          <h2 class="font-display text-5xl leading-[1] tracking-tight md:text-7xl" data-reveal>
+            Projetamos a partir<br />do <em class="text-accent-primary">relevo e do sol</em><br />daqui.
+          </h2>
+          <p class="mt-8 max-w-md text-ink-secondary" data-reveal>
+            Entre a Serra do Itapeti e a Serra do Mar, cada lote em Mogi tem declive, umidade e luz próprios.
+            Conhecemos o chão em que construímos e desenhamos a casa para ele, não o contrário.
+          </p>
+        </div>
+        <div class="relative rounded-card border border-line-default bg-surface-card p-4 shadow-card md:p-8" data-reveal>
+          <svg id="topo-map" viewBox="0 0 480 400" class="w-full" aria-hidden="true">
+            <g id="contours" class="fill-none stroke-ink-primary/25" stroke-width="1"></g>
+            <path id="sun-path" d="M40 330 Q240 -40 440 330" class="fill-none stroke-accent-primary/40" stroke-width="1" stroke-dasharray="3 5" />
+            <g id="sun">
+              <circle r="9" class="fill-accent-primary" />
+              <circle r="16" class="fill-none stroke-accent-primary/30" stroke-width="1" />
+            </g>
+            <g id="pin" transform="translate(262 222)">
+              <rect x="-14" y="-14" width="28" height="28" class="fill-none stroke-accent-primary" stroke-width="1.5" stroke-dasharray="3 3" />
+              <path d="M-7 6 V-2 L0 -8 L7 -2 V6 Z" class="fill-accent-primary" />
+              <line x1="14" y1="-14" x2="44" y2="-44" class="stroke-ink-primary/40" stroke-width="1" />
+              <text x="48" y="-46" class="fill-ink-primary font-mono" font-size="10">SEU TERRENO</text>
+            </g>
+            <g class="fill-ink-muted font-mono" font-size="9">
+              <text x="40" y="350" text-anchor="middle">L</text>
+              <text x="440" y="350" text-anchor="middle">O</text>
+              <text x="240" y="390" text-anchor="middle">trajetória solar · curvas de nível a cada 5 m</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PORTA (conceito do logo) ================= -->
+    <section id="door" class="relative h-screen overflow-hidden bg-accent-deep text-surface-page">
+      <svg id="door-svg" viewBox="0 0 1330 1182" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 h-full w-full" aria-hidden="true">
+        <rect x="550" y="0" width="230" height="1182" fill="#1D1840" id="door-beam" />
+        <g fill="none" stroke="#F1EEFA" stroke-width="22" stroke-linejoin="miter" stroke-linecap="butt">
+          <path class="arch" d="M198 975 V375 L665 95 L1122 375 V975" />
+          <path class="arch" d="M286 935 V418 L665 200 L1036 418 V935" />
+          <path class="arch" d="M370 885 V458 L665 300 L953 458 V885" />
+          <path class="arch" d="M453 832 V505 L665 398 L871 505 V832" />
+          <path class="arch" d="M532 785 V557 L665 494 L790 557 V785" />
+        </g>
+      </svg>
+      <div id="door-copy" class="relative flex h-full flex-col items-center justify-center px-4 text-center opacity-0">
+        <p class="mb-6 font-mono text-[11px] uppercase tracking-label text-surface-page/60">Moyas &amp; Barizon</p>
+        <h2 class="font-display text-5xl leading-[1] tracking-tight md:text-8xl">Vamos começar<br /><em>pela porta de entrada.</em></h2>
+      </div>
+    </section>
+
+    <!-- ================= CONTATO ================= -->
+    <section id="contato" class="px-4 py-32 md:px-10 md:py-44">
+      <div class="mx-auto grid max-w-[1200px] gap-16 lg:grid-cols-2">
+        <div>
+          <p class="label mb-6" data-reveal>Primeira conversa</p>
+          <h2 class="font-display text-5xl leading-[1] tracking-tight md:text-6xl" data-reveal>Conte em que ponto<br />do sonho você está.</h2>
+          <p class="mt-6 max-w-md text-ink-secondary" data-reveal>Ainda procurando terreno ou com a escritura na mão — a conversa inicial é sem compromisso e serve para desenharmos o caminho juntos.</p>
+        </div>
+        <form id="contact-form" class="grid gap-4 rounded-card border border-line-default bg-surface-card p-6 shadow-card md:p-10" data-reveal>
+          <label class="grid gap-2"><span class="label">Nome</span><input class="field" name="nome" required autocomplete="name" placeholder="Como podemos te chamar?" /></label>
+          <label class="grid gap-2"><span class="label">WhatsApp</span><input class="field" name="whatsapp" required type="tel" autocomplete="tel" placeholder="(11) 9 0000-0000" /></label>
+          <label class="grid gap-2"><span class="label">Momento</span>
+            <select class="field" name="momento">
+              <option>Ainda estou procurando terreno</option>
+              <option>Já tenho o terreno</option>
+              <option>Já tenho projeto, preciso construir</option>
+              <option>Quero apenas interiores</option>
+            </select>
+          </label>
+          <label class="grid gap-2"><span class="label">Sobre a casa</span><textarea class="field min-h-[110px] resize-y" name="mensagem" placeholder="Quantos quartos, o que não pode faltar, o que você ama em uma casa…"></textarea></label>
+          <button type="submit" class="btn-primary mt-2 justify-center">Quero conversar
+            <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" class="fill-none stroke-current" stroke-width="1.5" /></svg>
+          </button>
+          <p id="form-done" class="hidden text-center text-sm text-status-success">Recebemos! Entraremos em contato pelo WhatsApp em breve.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-accent-deep px-4 pb-10 pt-20 text-surface-page md:px-10">
+    <div class="mx-auto max-w-[1400px]">
+      <div class="flex flex-col justify-between gap-12 border-b border-surface-page/10 pb-16 md:flex-row">
+        <div class="flex items-center gap-5">
+          <img src="assets/Logo-MoyasBarizon.jpeg" alt="" class="h-20 w-20 rounded-button object-cover" />
+          <div>
+            <p class="font-display text-4xl leading-none">Moyas &amp; Barizon</p>
+            <p class="mt-2 text-sm text-surface-page/60">Arquitetura, construção e interiores</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-10 text-sm text-surface-page/70">
+          <div class="grid gap-2">
+            <p class="font-mono text-[11px] uppercase tracking-label text-surface-page/40">Navegue</p>
+            <a href="#disciplinas" class="hover:text-surface-page">O que fazemos</a>
+            <a href="#jornada" class="hover:text-surface-page">Jornada</a>
+            <a href="#contato" class="hover:text-surface-page">Contato</a>
+          </div>
+          <div class="grid gap-2">
+            <p class="font-mono text-[11px] uppercase tracking-label text-surface-page/40">Onde</p>
+            <p>Mogi das Cruzes — SP</p>
+            <p>Alto Tietê</p>
+          </div>
+        </div>
+      </div>
+      <p class="pt-8 font-mono text-[11px] uppercase tracking-label text-surface-page/40">© <span id="year"></span> Moyas &amp; Barizon</p>
+    </div>
+  </footer>
+
+  <!-- ================= GSAP ================= -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/DrawSVGPlugin.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin, MotionPathPlugin);
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const smooth = 'expo.out';
+
+    // ---------- Curvas de nível (geradas, determinísticas) ----------
+    (function buildContours() {
+      const g = document.getElementById('contours');
+      const cx = 262, cy = 222;
+      for (let i = 0; i < 10; i++) {
+        const r = 14 + i * 13;
+        let d = '';
+        for (let k = 0; k <= 96; k++) {
+          const t = (k / 96) * Math.PI * 2;
+          const w = 1 + 0.16 * Math.sin(3 * t + i * 0.45) + 0.07 * Math.sin(5 * t - i * 0.8) + 0.04 * Math.cos(7 * t + i);
+          const x = cx + Math.cos(t) * r * w * 1.25;
+          const y = cy + Math.sin(t) * r * w * 0.82;
+          d += (k ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+        }
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d + 'Z');
+        if (i % 4 === 0) p.setAttribute('stroke-width', '1.6');
+        g.appendChild(p);
+      }
+    })();
+
+    if (reduce) {
+      gsap.set(['#nav', '.hero-fade', '#hero-title', '#house-canvas', '#door-copy'], { opacity: 1 });
+    } else document.fonts.ready.then(() => {
+      // ---------- Intro ----------
+      const title = new SplitText('#hero-title', { type: 'lines', linesClass: 'split-line', mask: 'lines' });
+      gsap.timeline({ defaults: { ease: smooth } })
+        .to('#nav', { opacity: 1, duration: 1.2 }, 0.1)
+        .from(title.lines, { yPercent: 110, duration: 1.4, stagger: 0.12 }, 0.2)
+        .from('.hero-fade', { y: 24, opacity: 0, duration: 1.2, stagger: 0.12 }, 0.6)
+        .to('#house-canvas', { opacity: 1, duration: 1.8 }, 0.3);
+
+      ScrollTrigger.create({ start: 60, end: 'max', toggleClass: { targets: '#nav', className: 'nav-solid' } });
+      gsap.to('#scroll-hint', { opacity: 0, scrollTrigger: { trigger: '#hero', start: 'top top', end: '+=200', scrub: true } });
+
+      // ---------- Reveals genéricos ----------
+      gsap.utils.toArray('[data-reveal]').forEach((el) => {
+        gsap.from(el, { y: 48, opacity: 0, duration: 1.3, ease: smooth, scrollTrigger: { trigger: el, start: 'top 88%' } });
+      });
+
+      // ---------- Manifesto: palavras acendem com o scroll ----------
+      const words = new SplitText('#manifesto', { type: 'words' });
+      gsap.fromTo(words.words, { opacity: 0.14 }, {
+        opacity: 1, stagger: 0.05, ease: 'none',
+        scrollTrigger: { trigger: '#manifesto', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
+      });
+
+      // ---------- Disciplinas ----------
+      const [arq, cons, inter] = gsap.utils.toArray('.discipline');
+      gsap.timeline({ scrollTrigger: { trigger: arq, start: 'top 75%' } })
+        .from(arq.querySelectorAll('.draw > *'), { drawSVG: 0, duration: 1.4, stagger: 0.08, ease: 'power2.inOut' })
+        .from(arq.querySelectorAll('.plan-label text'), { opacity: 0, y: 4, stagger: 0.08, duration: 0.6 }, '-=0.4');
+
+      gsap.from(cons.querySelectorAll('.layer'), {
+        y: -36, opacity: 0, duration: 0.9, stagger: 0.18, ease: 'power3.out',
+        scrollTrigger: { trigger: cons, start: 'top 75%' },
+      });
+
+      gsap.timeline({ scrollTrigger: { trigger: inter, start: 'top 75%' }, defaults: { ease: smooth } })
+        .from(inter.querySelector('.cable'), { drawSVG: 0, duration: 0.9, ease: 'power2.inOut' })
+        .from(inter.querySelector('.lamp'), { y: -60, opacity: 0, duration: 1 }, '-=0.4')
+        .from(inter.querySelectorAll('.sofa, .art, .plant'), { y: 16, opacity: 0, duration: 1, stagger: 0.12 }, '-=0.6')
+        .from(inter.querySelector('.light-cone'), { opacity: 0, scaleY: 0.2, transformOrigin: '50% 0%', duration: 1.2 }, '-=0.5');
+
+      // ---------- Jornada ----------
+      gsap.fromTo('#steps-progress', { scaleY: 0 }, {
+        scaleY: 1, ease: 'none',
+        scrollTrigger: { trigger: '#steps', start: 'top 60%', end: 'bottom 60%', scrub: 0.5 },
+      });
+      gsap.utils.toArray('.step').forEach((step) => {
+        const node = step.querySelector('.node'), dot = step.querySelector('.dot');
+        ScrollTrigger.create({
+          trigger: step, start: 'top 60%',
+          onEnter: () => {
+            gsap.to(node, { borderColor: TOKENS.accent.primary, duration: 0.5 });
+            gsap.to(dot, { backgroundColor: TOKENS.accent.primary, scale: 1.6, duration: 0.5, ease: 'back.out(3)' });
+          },
+          onLeaveBack: () => {
+            gsap.to(node, { borderColor: 'rgba(21,18,31,0.3)', duration: 0.5 });
+            gsap.to(dot, { backgroundColor: 'rgba(21,18,31,0.2)', scale: 1, duration: 0.5 });
+          },
+        });
+      });
+      gsap.from('#key', { rotate: -90, opacity: 0, transformOrigin: '20% 50%', duration: 1.2, ease: 'back.out(2)', scrollTrigger: { trigger: '#key', start: 'top 70%' } });
+
+      // ---------- Mogi: curvas e sol ----------
+      gsap.from('#contours path', { drawSVG: 0, duration: 2, stagger: 0.08, ease: 'power2.inOut', scrollTrigger: { trigger: '#topo-map', start: 'top 75%' } });
+      gsap.from('#pin', { opacity: 0, y: -20, duration: 1, ease: 'back.out(2)', delay: 0.8, scrollTrigger: { trigger: '#topo-map', start: 'top 75%' } });
+      gsap.to('#sun', {
+        motionPath: { path: '#sun-path', align: '#sun-path', alignOrigin: [0.5, 0.5], start: 0.05, end: 0.95 },
+        ease: 'none',
+        scrollTrigger: { trigger: '#topo-map', start: 'top 85%', end: 'bottom 15%', scrub: 0.8 },
+      });
+
+      // ---------- Porta: atravessar o logo ----------
+      gsap.timeline({ scrollTrigger: { trigger: '#door', start: 'top top', end: '+=160%', pin: true, scrub: 0.8 } })
+        .to('.arch', { scale: 4.2, opacity: 0, svgOrigin: '665 760', ease: 'power2.in', stagger: { each: 0.12, from: 'start' }, duration: 1 })
+        .to('#door-beam', { opacity: 0.35, duration: 0.6 }, 0)
+        .to('#door-copy', { opacity: 1, duration: 0.5, ease: 'power1.out' }, 0.75)
+        .from('#door-copy h2', { scale: 0.9, duration: 0.5, ease: 'power2.out' }, 0.75);
+
+      ScrollTrigger.refresh();
+    });
+
+    // ---------- Formulário (sem backend ainda) ----------
+    document.getElementById('contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const done = document.getElementById('form-done');
+      done.classList.remove('hidden');
+      gsap.from(done, { y: 8, opacity: 0, duration: 0.8, ease: smooth });
+      e.target.reset();
+    });
+
+    window.addEventListener('load', () => ScrollTrigger.refresh());
+  </script>
+
+  <!-- ================= CASA 3D (three.js) + rotação por scroll (anime.js) ================= -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const canvas = document.getElementById('house-canvas');
+    const hero = document.getElementById('hero');
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+
+    // Luz
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d3c7, 0.6));
+    const sun = new THREE.DirectionalLight(0xfff6ea, 2.4);
+    sun.position.set(-10, 18, 12);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 60 });
+    sun.shadow.bias = -0.0004;
+    sun.shadow.radius = 4;
+    scene.add(sun);
+
+    // Sombra suave sobre a página
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.ShadowMaterial({ opacity: 0.12 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Materiais — estética de maquete: branco, madeira e vidro índigo da marca
+    const M = {
+      white: new THREE.MeshStandardMaterial({ color: 0xf3f0ea, roughness: 0.85 }),
+      bone: new THREE.MeshStandardMaterial({ color: 0xe4ded2, roughness: 0.95 }),
+      stone: new THREE.MeshStandardMaterial({ color: 0xcfc7b8, roughness: 0.9 }),
+      wood: new THREE.MeshStandardMaterial({ color: 0xa97c55, roughness: 0.65 }),
+      glass: new THREE.MeshStandardMaterial({ color: 0x1e1552, roughness: 0.06, metalness: 0.65, envMapIntensity: 1.4 }),
+      dark: new THREE.MeshStandardMaterial({ color: 0x2a2733, roughness: 0.5 }),
+      water: new THREE.MeshStandardMaterial({ color: 0x3a3486, roughness: 0.04, metalness: 0.35 }),
+    };
+
+    const house = new THREE.Group();
+    scene.add(house);
+    const box = (w, h, d, mat, x, y, z) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      m.castShadow = m.receiveShadow = true;
+      house.add(m);
+      return m;
+    };
+
+    const P = 0.35; // topo da base
+    box(16, P, 12, M.bone, 0, P / 2, 0);
+
+    // Térreo
+    box(9, 3.1, 6, M.white, -1.2, P + 1.55, -0.6);
+    box(6.8, 2.6, 0.06, M.glass, -0.4, P + 1.4, 2.43);
+    [-2.1, -0.4, 1.3].forEach((x) => box(0.05, 2.6, 0.1, M.dark, x, P + 1.4, 2.46));
+    box(1.1, 2.6, 0.08, M.wood, -4.9, P + 1.3, 2.44);
+    box(0.06, 2.6, 4, M.glass, 3.33, P + 1.4, -0.6);
+    box(9.3, 0.16, 6.3, M.white, -1.2, 3.45 + 0.08, -0.6);
+    box(5.2, 2.4, 0.06, M.glass, -2.6, P + 1.3, -3.63);
+    box(1.4, 1.2, 0.06, M.glass, 1.6, P + 1.9, -3.63);
+    box(0.06, 1.4, 2.4, M.glass, -5.73, P + 1.9, -1.2);
+
+    // Volume superior em balanço
+    const UY = 3.61, UH = 2.9;
+    box(8, UH, 5.4, M.white, 1.6, UY + UH / 2, 0);
+    box(7.2, 2.3, 0.06, M.glass, 1.6, UY + UH / 2, 2.72);
+    box(0.06, 2.2, 4.2, M.glass, 5.63, UY + UH / 2, 0);
+    box(0.06, 2.2, 4.2, M.glass, -2.43, UY + UH / 2, 0);
+    box(8.5, 0.18, 5.9, M.white, 1.6, UY + UH + 0.09, 0);
+    box(6.4, 1.1, 0.06, M.glass, 1.2, UY + 1.7, -2.73);
+    [-1.0, 1.2, 3.4].forEach((x) => box(0.05, 1.1, 0.1, M.dark, x, UY + 1.7, -2.76));
+    box(0.18, 3.26, 0.18, M.dark, 5.2, P + 1.63, 2.3);
+
+    // Brises de madeira
+    const slatCount = 30;
+    const slats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.09, 2.5, 0.14), M.wood, slatCount);
+    slats.castShadow = slats.receiveShadow = true;
+    const tmp = new THREE.Object3D();
+    for (let i = 0; i < slatCount; i++) {
+      tmp.position.set(-2.0 + (i * 7.2) / (slatCount - 1), UY + UH / 2, 2.85);
+      tmp.updateMatrix();
+      slats.setMatrixAt(i, tmp.matrix);
+    }
+    house.add(slats);
+
+    // Muro, piscina, deck e caminho
+    box(0.4, 2.4, 8, M.stone, -7.2, P + 1.2, 0.2);
+    box(5.2, 0.04, 2.4, M.water, 3.6, P + 0.01, 4.3);
+    box(5, 0.05, 1.4, M.wood, -2.4, P + 0.02, 3.4);
+    [3.6, 4.5, 5.4].forEach((z, i) => box(1, 0.04, 0.6, M.white, -4.9 + i * 0.1, P + 0.02, z));
+
+    // Árvores de maquete
+    [[-6.2, -4.6, 1], [6.6, -3.8, 1.15], [-6.1, 4.9, 0.85]].forEach(([x, z, s]) => {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 2.6 * s, 8), M.dark);
+      trunk.position.set(x, P + 1.3 * s, z);
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(1 * s, 32, 16), M.white);
+      crown.position.set(x, P + 2.9 * s, z);
+      const crown2 = new THREE.Mesh(new THREE.SphereGeometry(0.62 * s, 32, 16), M.white);
+      crown2.position.set(x + 0.5 * s, P + 3.5 * s, z - 0.2);
+      [trunk, crown, crown2].forEach((m) => { m.castShadow = m.receiveShadow = true; house.add(m); });
+    });
+
+    // ---------- Câmera / layout responsivo ----------
+    const target = new THREE.Vector3(0, 2.2, 0);
+    let W = 1, H = 1, mobile = false;
+    function resize() {
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      mobile = W < 900;
+      renderer.setSize(W, H, false);
+      camera.aspect = W / H;
+      // desloca a casa para a direita no desktop e para baixo no mobile
+      if (mobile) camera.setViewOffset(W, H, 0, -H * 0.14, W, H);
+      else camera.setViewOffset(W, H, -W * 0.2, -H * 0.06, W, H);
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(canvas);
+    resize();
+
+    // ---------- Estado dirigido pelo scroll (anime.js) ----------
+    const view = { rot: 0 };
+    const TURN = Math.PI * 2;
+    try {
+      const { animate, onScroll } = await import('https://cdn.jsdelivr.net/npm/animejs@4.0.2/+esm');
+      animate(view, {
+        rot: TURN,
+        duration: 1000,
+        ease: 'linear',
+        autoplay: onScroll({ target: hero, enter: 'top top', leave: 'bottom bottom', sync: 0.15 }),
+      });
+    } catch (err) {
+      // fallback sem anime.js: lerp manual do progresso do scroll
+      console.warn('anime.js indisponível, usando fallback', err);
+      let goal = 0;
+      const read = () => {
+        const r = hero.getBoundingClientRect();
+        goal = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight))) * TURN;
+      };
+      addEventListener('scroll', read, { passive: true });
+      read();
+      (function tick() { view.rot += (goal - view.rot) * 0.1; requestAnimationFrame(tick); })();
+    }
+
+    // ---------- UI ligada à rotação ----------
+    const readout = document.getElementById('angle-readout');
+    const needle = document.getElementById('compass-needle');
+    const phases = [...document.querySelectorAll('.hero-phase')];
+    let phase = 0;
+    function setPhase(n) {
+      if (n === phase) return;
+      const out = phases[phase], inn = phases[n];
+      gsap.to(out, { opacity: 0, y: n > phase ? -16 : 16, duration: 0.5, ease: 'power2.in' });
+      gsap.fromTo(inn, { opacity: 0, y: n > phase ? 16 : -16 }, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', delay: 0.15 });
+      phase = n;
+    }
+
+    // Parallax sutil com o mouse
+    const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
+    addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; });
+
+    // Intro: a casa "sobe" da base
+    house.scale.set(1, 0.001, 1);
+    gsap.to(house.scale, { y: 1, duration: 2.2, ease: 'expo.out', delay: 0.4 });
+
+    const BASE = 0.12;
+    // Só renderiza enquanto o hero estiver visível
+    let visible = true;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(hero);
+
+    renderer.setAnimationLoop(() => {
+      if (!visible) return;
+      const p = view.rot / TURN;
+      house.rotation.y = BASE + view.rot;
+
+      mouse.sx += (mouse.x - mouse.sx) * 0.05;
+      mouse.sy += (mouse.y - mouse.sy) * 0.05;
+      const dist = mobile ? (W / H < 0.6 ? 64 : 50) : 33;
+      const elev = 0.44 - Math.sin(p * Math.PI) * 0.08; // câmera desce no meio do giro
+      camera.position.set(
+        Math.cos(Math.PI / 4) * dist + mouse.sx * 2,
+        dist * elev - mouse.sy * 1.2,
+        Math.sin(Math.PI / 4) * dist
+      );
+      camera.lookAt(target);
+      renderer.render(scene, camera);
+
+      const deg = Math.round((view.rot * 180) / Math.PI) % 360;
+      readout.textContent = String(deg).padStart(3, '0');
+      needle.setAttribute('transform', `rotate(${deg} 40 40)`);
+      setPhase(p < 0.34 ? 0 : p < 0.67 ? 1 : 2);
+    });
+  </script>
+</body>
+</html>
